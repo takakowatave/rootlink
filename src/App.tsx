@@ -1,13 +1,16 @@
 import { useState } from "react";
 import './App.css'
-import { Volume2 } from 'lucide-react';
-
+import Header from './components/Header'
+import { AiFillFolderAdd } from 'react-icons/ai'
+import { FaVolumeHigh } from "react-icons/fa6";
 
 export default function App() {
   const [input, setInput] = useState("");
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+    <>
+      <Header />
+    <div className="min-h-screen bg-gray-100 flex items-start justify-center pt-12">
       <div className="bg-white p-8 rounded-2xl w-full max-w-md">
         <h1 className="text-2xl font-bold text-center mb-6">英単語検索</h1>
         <div className="flex gap-2">
@@ -22,16 +25,26 @@ export default function App() {
             検索
           </button>
         </div>
-        <div className="bg-white p-4 border border-gray-200 mt-6 w-full max-w-xl">
-          <div className="flex items-center justify-between">            
-            <h2 className="text-xl font-bold">quaint</h2>
-            <Volume2 className="w-5 h-5 text-gray-600" />
-            <span className="text-sm text-gray-500">/kwent/</span>
+        <div className="relative bg-white rounded px-3 p-4 border border-gray-200 mt-6 w-full max-w-xl">
+          <button className="absolute top-2 right-2 text-blue-500 hover:text-blue-600">
+            <AiFillFolderAdd size={28} />
+          </button>
+          <div className="flex items-center flex-wrap gap-4 mb-2">            
+            <h2 className="text-2xl font-bold">quaint</h2>
+            <FaVolumeHigh size={24}/>
+            <span className="text-s text-gray-500">/kwent/</span>
+            <span className="inline-block text-gray-600 rounded text-sm mt-1 px-2 py-0.4 border border-gray-400">
+              adj
+            </span>
           </div>
-          <p className="text-green-800 text-sm mt-1">adj</p>
-          <p className="mt-2">趣のある、古風で魅力的な</p>
+          <p className="text-lg mt-2">趣のある、古風で魅力的な</p>
+          <div className="mt-6 ml-6">
+            <p className="mt-2">その町には趣のある店がたくさんあります。</p>
+            <p className="mt-2">The town is full of quaint shops.</p>
+          </div>
         </div>
       </div>
     </div>
+    </>
   );
 }

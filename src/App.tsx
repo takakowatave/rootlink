@@ -1,16 +1,17 @@
 import { useState } from "react";
 import './App.css'
 import Header from './components/Header'
-import { AiFillFolderAdd } from 'react-icons/ai'
-import { FaVolumeHigh } from "react-icons/fa6";
+import WordCard from './components/WordCard'
+import { supabase } from './lib/supabase'
 
-type WordInfo = {
+
+export type WordInfo = {
   word: string;
   meaning: string;
-  partOfSpeech: string;
+  pos: string;
   pronunciation: string;
-  exampleEn: string;
-  exampleJa: string;
+  example: string;
+  translation: string;
 }
 
 const App = () => {
@@ -24,10 +25,10 @@ const App = () => {
   {
     "word": "単語",
     "meaning": "意味（日本語）",
-    "partOfSpeech": "品詞",
+    "pos": "品詞",
     "pronunciation": "発音記号",
-    "exampleEn": "英語の例文",
-    "exampleJa": "例文の日本訳"
+    "example": "英語の例文",
+    "translation": "例文の日本訳"
   }
   `;
 
@@ -51,11 +52,41 @@ try {
 
   const parsed = JSON.parse(cleaned || '');
   setParsedResult(parsed);
-} catch (e) {
-  console.error("JSONパースエラー", e);
-  setParsedResult(null);
+    } catch (e) {
+      console.error("JSONパースエラー", e);
+      setParsedResult(null);
+    }
 }
+
+const handleSubmit = async () => {
+  if (!parsedResult) return;
+
+  try {
+    const { data, error } = await supabase
+      .from('words')
+      .insert([
+        {
+          word: parsedResult.word,
+          meaning: parsedResult.meaning,
+          pos: parsedResult.pos,
+          pronunciation: parsedResult.pronunciation,
+          example: parsedResult.example,
+          translation: parsedResult.translation,
+        }
+      ])
+      .select();
+
+    if (error) {
+      console.error("保存エラー:", error.message);
+    } else {
+      console.log("保存成功:", data);
+    }
+  } catch (err) {
+    console.error("例外:", err);
+  }
 }
+
+
   return (
     <>
       <Header />
@@ -75,32 +106,13 @@ try {
           </button>
         </div>
         <div className="relative bg-white rounded px-3 p-4 border border-gray-200 mt-6 w-full max-w-xl">
-          <button className="absolute top-2 right-2 text-blue-500 hover:text-blue-600">
-            <AiFillFolderAdd size={30
-
-            } />
-          </button>
-          {/* <div className="flex items-center flex-wrap gap-4 mb-2">            
-            <h2 className="text-2xl font-bold">quaint</h2>
-            <FaVolumeHigh size={24}/>
-            <span className="text-s text-gray-500">/kwent/</span>
-            <span className="inline-block text-gray-600 rounded text-sm mt-1 px-2 py-0.4 border border-gray-400">
-              adj
-            </span>
-          </div> */}
           <div className="mt-6 ml-6">
             {parsedResult && (
-              <div className="mt-2">
-                <div className="flex items-center gap-2 mb-2">
-                <h2 className="text-2xl font-bold">{parsedResult.word}</h2>
-                <FaVolumeHigh color="grey" size={24}/>
-                </div>
-                <span className="text-s text-gray-500 mr-2">{parsedResult.pronunciation}</span>
-                <p className="inline-block text-gray-600 rounded text-sm mt-1 px-2 py-0.4 border border-gray-400">{parsedResult.partOfSpeech}</p>
-                <p className="text-lg mt-2">{parsedResult.meaning}</p>
-                <p className="mt-2 text-gray-600">{parsedResult.exampleEn}</p>
-                <p className="mt-2 text-gray-600">{parsedResult.exampleJa}</p>
-              </div>
+              <WordCard
+                word={parsedResult}
+                showAddButton={true}
+                onSave={handleSubmit}
+              />
             )}
           </div>
         </div>

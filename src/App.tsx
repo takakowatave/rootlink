@@ -2,7 +2,8 @@ import { useState } from "react";
 import './App.css'
 import Header from './components/Header'
 import WordCard from './components/WordCard'
-import { supabase } from './lib/supabase'
+import { saveWord, deleteWord } from './lib/supabaseApi';
+import toast, { Toaster } from 'react-hot-toast';
 
 
 export type WordInfo = {
@@ -17,7 +18,7 @@ export type WordInfo = {
 const App = () => {
   const [input, setInput] = useState("");
   const [parsedResult, setParsedResult] = useState<WordInfo | null>(null);
-
+  const [isSaved, setIsSaved] = useState(false);
   const handleSearch = async () => {
   const prompt = `
   次の英単語「${input}」について、日本語で以下の形式の**JSON文字列のみ**を返してください。装飾や説明文は不要です。
@@ -44,8 +45,8 @@ const App = () => {
   );
 
   const data = await res.json();
-  const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text; //rawText = Geminiの返答そのまま
-  
+  const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text; //rawText = Geminiの返答そのまま  
+
 try {
   // 返答から ```json や ``` を削除し、余分な改行も除く
   const cleaned = rawText?.replace(/```json|```/g, '').trim();
@@ -58,38 +59,28 @@ try {
     }
 }
 
-const handleSubmit = async () => {
+const handleToggleSave = async () => {
   if (!parsedResult) return;
 
-  try {
-    const { data, error } = await supabase
-      .from('words')
-      .insert([
-        {
-          word: parsedResult.word,
-          meaning: parsedResult.meaning,
-          pos: parsedResult.pos,
-          pronunciation: parsedResult.pronunciation,
-          example: parsedResult.example,
-          translation: parsedResult.translation,
-        }
-      ])
-      .select();
-
-    if (error) {
-      console.error("保存エラー:", error.message);
-    } else {
-      console.log("保存成功:", data);
+  if (isSaved) {
+    const success = await deleteWord(parsedResult);
+    if (success) {
+      toast.success("保存を取り消しました");
+      setIsSaved(false);
     }
-  } catch (err) {
-    console.error("例外:", err);
+  } else {
+    const success = await saveWord(parsedResult);
+    if (success) {
+      toast.success("保存しました");
+      setIsSaved(true);
+    }
   }
-}
-
+};
 
   return (
     <>
       <Header />
+      <Toaster position="top-center" />
     <div className="min-h-screen bg-gray-100 flex items-start justify-center pt-12">
       <div className="bg-white p-8 rounded-2xl w-full max-w-md">
         <h1 className="text-2xl font-bold text-center mb-6">英単語検索</h1>
@@ -110,8 +101,8 @@ const handleSubmit = async () => {
             {parsedResult && (
               <WordCard
                 word={parsedResult}
-                showAddButton={true}
-                onSave={handleSubmit}
+                isSaved={isSaved}
+                onSave={handleToggleSave}
               />
             )}
           </div>
@@ -124,3 +115,4 @@ const handleSubmit = async () => {
 
 
 export default App;
+

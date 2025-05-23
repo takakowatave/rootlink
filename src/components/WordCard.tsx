@@ -1,21 +1,22 @@
-import { AiFillFolderAdd } from 'react-icons/ai'
 import { FaVolumeHigh } from "react-icons/fa6";
 import type { WordInfo } from '../App' // または別で定義して共通化
+import { BsBookmark, BsBookmarkFill } from 'react-icons/bs';
 
 type Props = {
     word: WordInfo;
     onSave?: () => void; //何かをするけど、返り値はない関数
-    showAddButton?: boolean;
+    isSaved?: boolean;
 };
 
-const WordCard = ({ word, showAddButton, onSave }: Props) => {
+const WordCard = ({ word, onSave, isSaved }: Props) => {
 return (
     <div className="relative ...">
-        {showAddButton && (
-        <button onClick={onSave} className="absolute top-2 right-2 text-blue-500 hover:text-blue-600">
-            <AiFillFolderAdd size={30} />
+        <button
+            onClick={onSave}
+            className="absolute top-2 right-2 text-blue-500 hover:text-blue-600"
+        >
+            {isSaved ? <BsBookmarkFill size={24} /> : <BsBookmark size={24} />}
         </button>
-        )}
 
         <div className="mt-6 ml-6">
         <div className="mt-2">

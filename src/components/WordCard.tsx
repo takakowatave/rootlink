@@ -1,5 +1,5 @@
 import { FaVolumeHigh } from "react-icons/fa6";
-import type { WordInfo } from '../App' // または別で定義して共通化
+import type { WordInfo } from '../types';
 import { BsBookmark, BsBookmarkFill } from 'react-icons/bs';
 
 type Props = {

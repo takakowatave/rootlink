@@ -2,18 +2,10 @@ import { useState } from "react";
 import './App.css'
 import Header from './components/Header'
 import WordCard from './components/WordCard'
-import { saveWord, deleteWord } from './lib/supabaseApi';
+import { saveWord, deleteWord, checkIfWordExists } from './lib/supabaseApi';
 import toast, { Toaster } from 'react-hot-toast';
+import type { WordInfo } from './types';
 
-
-export type WordInfo = {
-  word: string;
-  meaning: string;
-  pos: string[],
-  pronunciation: string;
-  example: string;
-  translation: string;
-}
 
 const App = () => {
   const [input, setInput] = useState("");
@@ -47,11 +39,13 @@ const App = () => {
   const data = await res.json();
   const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text; //rawText = Geminiの返答そのまま  
 
+let parsed = null;
+    
 try {
   // 返答から ```json や ``` を削除し、余分な改行も除く
   const cleaned = rawText?.replace(/```json|```/g, '').trim();
 
-  const parsed = JSON.parse(cleaned || '');
+  parsed = JSON.parse(cleaned || '');
   parsed.pos = typeof parsed.pos === 'string'
   ? parsed.pos.split(/[,、、 ]+/).filter(Boolean)
   : [];
@@ -60,6 +54,9 @@ try {
       console.error("JSONパースエラー", e);
       setParsedResult(null);
     }
+      // 検索後に追加する
+    const exists = await checkIfWordExists(parsed);
+    setIsSaved(Boolean(exists));
 }
 
 const handleToggleSave = async () => {
@@ -70,6 +67,7 @@ const handleToggleSave = async () => {
     if (success) {
       toast.success("保存を取り消しました");
       setIsSaved(false);
+      setParsedResult({ ...parsedResult }); // ← 同じ内容だけど再セット
     }
   } else {
     const success = await saveWord(parsedResult);

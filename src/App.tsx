@@ -9,7 +9,7 @@ import toast, { Toaster } from 'react-hot-toast';
 export type WordInfo = {
   word: string;
   meaning: string;
-  pos: string;
+  pos: string[],
   pronunciation: string;
   example: string;
   translation: string;
@@ -52,6 +52,9 @@ try {
   const cleaned = rawText?.replace(/```json|```/g, '').trim();
 
   const parsed = JSON.parse(cleaned || '');
+  parsed.pos = typeof parsed.pos === 'string'
+  ? parsed.pos.split(/[,、、 ]+/).filter(Boolean)
+  : [];
   setParsedResult(parsed);
     } catch (e) {
       console.error("JSONパースエラー", e);
@@ -73,6 +76,7 @@ const handleToggleSave = async () => {
     if (success) {
       toast.success("保存しました");
       setIsSaved(true);
+      setParsedResult({ ...parsedResult }); // ← 同じ内容だけど再セット
     }
   }
 };

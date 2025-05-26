@@ -8,13 +8,14 @@ type Props = {
     isSaved?: boolean;
 };
 
-const WordCard = ({ word, onSave, isSaved }: Props) => {
+const WordCard = ({ word, onSave, isSaved = false }: Props) => {
+console.log("WordCard描画", isSaved)
 return (
     <div className="relative ...">
         <button
             onClick={onSave}
             className="absolute top-2 right-2 text-blue-500 hover:text-blue-600"
-        >
+        > 
             {isSaved ? <BsBookmarkFill size={24} /> : <BsBookmark size={24} />}
         </button>
 

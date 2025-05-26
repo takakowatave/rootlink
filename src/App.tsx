@@ -47,8 +47,8 @@ try {
 
   parsed = JSON.parse(cleaned || '');
   parsed.pos = typeof parsed.pos === 'string'
-  ? parsed.pos.split(/[,、、 ]+/).filter(Boolean)
-  : [];
+  ? parsed.pos.split(/[,、、 ]+/).filter(Boolean)[0] || ''
+  : '';
   setParsedResult(parsed);
     } catch (e) {
       console.error("JSONパースエラー", e);
@@ -60,6 +60,7 @@ try {
 }
 
 const handleToggleSave = async () => {
+  console.log("保存状態を更新:", !isSaved);
   if (!parsedResult) return;
 
   if (isSaved) {
@@ -67,14 +68,15 @@ const handleToggleSave = async () => {
     if (success) {
       toast.success("保存を取り消しました");
       setIsSaved(false);
-      setParsedResult({ ...parsedResult }); // ← 同じ内容だけど再セット
+      setParsedResult({ ...parsedResult, _version: Date.now() });
+
     }
   } else {
     const success = await saveWord(parsedResult);
     if (success) {
       toast.success("保存しました");
       setIsSaved(true);
-      setParsedResult({ ...parsedResult }); // ← 同じ内容だけど再セット
+     setParsedResult({ ...parsedResult, _version: Date.now() });
     }
   }
 };
@@ -94,7 +96,7 @@ const handleToggleSave = async () => {
             className="flex-1 border border-gray-200 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
             placeholder="検索ワードを入力"
           />
-          <button  onClick={handleSearch} className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+          <button onClick={handleSearch} className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
             検索
           </button>
         </div>
@@ -102,6 +104,7 @@ const handleToggleSave = async () => {
           <div className="mt-6 ml-6">
             {parsedResult && (
               <WordCard
+                key={`${parsedResult.word}-${isSaved}`}
                 word={parsedResult}
                 isSaved={isSaved}
                 onSave={handleToggleSave}

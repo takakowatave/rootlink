@@ -2,7 +2,7 @@ import { useState } from "react";
 import './App.css'
 import Header from './components/Header'
 import WordCard from './components/WordCard'
-import { saveWord, deleteWord, checkIfWordExists } from './lib/supabaseApi';
+import { saveWord, deleteWord } from './lib/supabaseApi';
 import toast, { Toaster } from 'react-hot-toast';
 import type { WordInfo } from './types';
 
@@ -50,36 +50,51 @@ try {
   ? parsed.pos.split(/[,、、 ]+/).filter(Boolean)[0] || ''
   : '';
   setParsedResult(parsed);
+  setIsSaved(false); // ← 常に初期化
+
     } catch (e) {
       console.error("JSONパースエラー", e);
       setParsedResult(null);
     }
       // 検索後に追加する
-    const exists = await checkIfWordExists(parsed);
-    setIsSaved(Boolean(exists));
+    // const exists = await checkIfWordExists(parsed);
+    // setIsSaved(Boolean(exists));
 }
 
 const handleToggleSave = async () => {
-  console.log("保存状態を更新:", !isSaved);
-  if (!parsedResult) return;
+  const currentSaved = isSaved; // ← ここで状態をキャプチャ
+  const newValue = !currentSaved;
 
-  if (isSaved) {
+  console.log("保存状態を更新:", newValue);
+  if (!parsedResult) return;
+  console.log("保存前のparsedResult:", parsedResult);
+
+  if (currentSaved) {
     const success = await deleteWord(parsedResult);
+
     if (success) {
       toast.success("保存を取り消しました");
       setIsSaved(false);
-      setParsedResult({ ...parsedResult, _version: Date.now() });
 
+      // ✅ 削除が終わった後に id を除去
+      const copied = { ...parsedResult };
+      delete copied.id;
+      setParsedResult({ ...copied, _version: Math.random() });
     }
+
   } else {
-    const success = await saveWord(parsedResult);
-    if (success) {
-      toast.success("保存しました");
-      setIsSaved(true);
-     setParsedResult({ ...parsedResult, _version: Date.now() });
+    const saved = await saveWord(parsedResult);
+    console.log("保存の結果（success）:", saved); // ✅ ここで saved.id が存在するか確認
+
+    if (saved) {
+      console.log("削除時のid:", parsedResult.id); // ← App 側で
+      setParsedResult({ ...saved, _version: Math.random() }); // ✅ idを含めてセット
     }
+
+
   }
 };
+
 
   return (
     <>
@@ -100,18 +115,18 @@ const handleToggleSave = async () => {
             検索
           </button>
         </div>
-        <div className="relative bg-white rounded px-3 p-4 border border-gray-200 mt-6 w-full max-w-xl">
-          <div className="mt-6 ml-6">
-            {parsedResult && (
-              <WordCard
-                key={`${parsedResult.word}-${isSaved}`}
-                word={parsedResult}
-                isSaved={isSaved}
-                onSave={handleToggleSave}
-              />
-            )}
+        {parsedResult && (
+          <div key={`${parsedResult.word}-${parsedResult._version}`}>
+          <WordCard
+            key={`${parsedResult.word}-${parsedResult._version}`}
+            word={parsedResult}
+            isSaved={isSaved}
+            onSave={handleToggleSave}
+          />
+
           </div>
-        </div>
+        )}
+
       </div>
     </div>
     </>
@@ -120,4 +135,3 @@ const handleToggleSave = async () => {
 
 
 export default App;
-

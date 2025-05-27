@@ -2,53 +2,42 @@ import { supabase } from './supabaseClient'
 import type { WordInfo } from '../types';
 
 
-export const saveWord = async (word: WordInfo): Promise<boolean> => {
-        console.log('match条件:', {
-        word: word.word,
-        meaning: word.meaning,
-        pos: JSON.stringify(word.pos)
-        });
-        const existing = await supabase
-            .from('words') // words テーブルから
-            .select('id')  // id カラムだけを選んで
-            .match({
-            word: word.word,
-            meaning: word.meaning,
-            pos: JSON.stringify(word.pos),
-        });
-        if (existing.data && existing.data.length > 0) {
-            return false;
-        }
-        const { error } = await supabase
-            .from('words')
-            .insert([
-                {
-                word: word.word,
-                meaning: word.meaning,
-                pos: JSON.stringify(word.pos),
-                pronunciation: word.pronunciation,
-                example: word.example,
-                translation: word.translation,
-                }
-            ])
-        .select();
-    return !error;
+export const saveWord = async (word: WordInfo): Promise<WordInfo | null> => {
+
+const { data, error } = await supabase
+    .from('words')
+    .upsert([word], { onConflict: 'word,pos' })
+    .select('id');
+
+    if (error) {
+    console.log("保存エラー:", error.message);
     }
 
+    if (data && data.length > 0) {
+        word.id = data[0].id;
+        return word;
+    }
+
+    return null;
+};
+
+
 export const deleteWord = async (word: WordInfo): Promise<boolean> => {
+    console.log('削除対象の条件', {
+        word: word.word,
+        id: word.id, // ← これを追加して id の有無を確認
+    });
+
     const { error } = await supabase
         .from('words')
         .delete()
-        .eq('word', word.word)
-        .eq('meaning', word.meaning)
-        .eq('pos', JSON.stringify(word.pos))
-    
+        .eq('id', word.id);
+
     if (error) {
     console.log("削除エラー:", error.message); // errorがnullじゃないときだけアクセス
     }
 
     return !error;
-    
     }
 
 export const checkIfWordExists = async (word: WordInfo) => {
@@ -57,13 +46,8 @@ export const checkIfWordExists = async (word: WordInfo) => {
         .select('id') // id だけでOK
         .match({
         word: word.word,
-        meaning: word.meaning,
-        pos: JSON.stringify(word.pos),
+        pos: word.pos
         });
 
     return data && data.length > 0;
 };
-
-
-    
-

@@ -11,7 +11,8 @@ const App = () => {
   const [input, setInput] = useState("");
   const [parsedResult, setParsedResult] = useState<WordInfo | null>(null);
   const [isSaved, setIsSaved] = useState(false);
-  const handleSearch = async () => {
+  
+  const parseGeminiResponse = async () => {
     const prompt = `
     次の英単語「${input}」について、日本語で以下の形式の**JSON文字列のみ**を返してください。装飾や説明文は不要です。
   
@@ -35,33 +36,32 @@ const App = () => {
         })
       }
     );
-  
     const data = await res.json();
     const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-  
-    let parsed = null;
-  
+
     try {
       const cleaned = rawText?.replace(/```json|```/g, '').trim();
-      parsed = JSON.parse(cleaned || '');
-  
-      parsed.pos = typeof parsed.pos === 'string'
-        ? parsed.pos.split(/[,、、 ]+/).filter(Boolean)[0] || ''
-        : '';
+      if (!cleaned) throw new Error("空のレスポンス");
+      const parsed = JSON.parse(cleaned);
+      return parsed;
     } catch (e) {
       console.error("JSONパースエラー", e);
       setParsedResult(null);
       return;
     }
+  }
+
   
+  const handleSearch = async () => {
+    const parsed = await parseGeminiResponse();
     // ✅ tryの外で checkIfWordExists して、parsedResultにidつきで渡す
     const existing = await checkIfWordExists(parsed);
   
     if (existing) {
-      setParsedResult({ ...existing, _version: Math.random() });
+      setParsedResult(existing);
       setIsSaved(true);
     } else {
-      setParsedResult({ ...parsed, _version: Math.random() });
+      setParsedResult(parsed);
       setIsSaved(false);
     }
   };
@@ -69,8 +69,8 @@ const App = () => {
 
 const handleToggleSave = async () => {
   if (!parsedResult) return;
-
   if (isSaved) {
+
     console.log("削除直前の id:", parsedResult.id);
 
     const success = await deleteWord(parsedResult);
@@ -78,7 +78,6 @@ const handleToggleSave = async () => {
     if (success) {
       toast.success("保存を取り消しました");
       setIsSaved(false);
-      setParsedResult(null); // or リセットしたparsedResultを渡す
     } else {
       toast.error("削除に失敗しました");
     }
@@ -86,18 +85,22 @@ const handleToggleSave = async () => {
     console.log("保存前のparsedResult:", parsedResult);
 
     const saved = await saveWord(parsedResult);
-
-    if (saved) {
+    
+    if (saved?.id) {
       setIsSaved(true);
-      setParsedResult({ ...saved, _version: Math.random() });
+      setParsedResult(saved);
+      toast.success("保存しました");
     } else {
       const existing = await checkIfWordExists(parsedResult);
       if (existing) {
+        setParsedResult(existing);
         setIsSaved(true);
-        setParsedResult({ ...existing, _version: Math.random() });
+      } else {
+        setParsedResult(parsedResult);
+        setIsSaved(false);
       }
     }
-  }
+}
 };
 
 
@@ -122,9 +125,8 @@ const handleToggleSave = async () => {
           </button>
         </div>
         {parsedResult && (
-          <div key={`${parsedResult.word}-${parsedResult._version}`}>
+          <div key={parsedResult.word}>
           <WordCard
-            key={`${parsedResult.word}-${parsedResult._version}`}
             word={parsedResult}
             isSaved={isSaved}
             onSave={handleToggleSave}

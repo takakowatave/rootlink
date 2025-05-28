@@ -2,7 +2,7 @@ import { useState } from "react";
 import './App.css'
 import Header from './components/Header'
 import WordCard from './components/WordCard'
-import { saveWord, deleteWord } from './lib/supabaseApi';
+import { saveWord, deleteWord, checkIfWordExists } from './lib/supabaseApi';
 import toast, { Toaster } from 'react-hot-toast';
 import type { WordInfo } from './types';
 
@@ -12,88 +12,94 @@ const App = () => {
   const [parsedResult, setParsedResult] = useState<WordInfo | null>(null);
   const [isSaved, setIsSaved] = useState(false);
   const handleSearch = async () => {
-  const prompt = `
-  次の英単語「${input}」について、日本語で以下の形式の**JSON文字列のみ**を返してください。装飾や説明文は不要です。
-
-  {
-    "word": "単語",
-    "meaning": "意味（日本語）",
-    "pos": "品詞",
-    "pronunciation": "発音記号",
-    "example": "英語の例文",
-    "translation": "例文の日本訳"
-  }
-  `;
-
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${import.meta.env.VITE_GEMINI_API_KEY}`,
+    const prompt = `
+    次の英単語「${input}」について、日本語で以下の形式の**JSON文字列のみ**を返してください。装飾や説明文は不要です。
+  
     {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }]
-      })
+      "word": "単語",
+      "meaning": "意味（日本語）",
+      "pos": "品詞",
+      "pronunciation": "発音記号",
+      "example": "英語の例文",
+      "translation": "例文の日本訳"
     }
-  );
-
-  const data = await res.json();
-  const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text; //rawText = Geminiの返答そのまま  
-
-let parsed = null;
-    
-try {
-  // 返答から ```json や ``` を削除し、余分な改行も除く
-  const cleaned = rawText?.replace(/```json|```/g, '').trim();
-
-  parsed = JSON.parse(cleaned || '');
-  parsed.pos = typeof parsed.pos === 'string'
-  ? parsed.pos.split(/[,、、 ]+/).filter(Boolean)[0] || ''
-  : '';
-  setParsedResult(parsed);
-  setIsSaved(false); // ← 常に初期化
-
+    `;
+  
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${import.meta.env.VITE_GEMINI_API_KEY}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }]
+        })
+      }
+    );
+  
+    const data = await res.json();
+    const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+  
+    let parsed = null;
+  
+    try {
+      const cleaned = rawText?.replace(/```json|```/g, '').trim();
+      parsed = JSON.parse(cleaned || '');
+  
+      parsed.pos = typeof parsed.pos === 'string'
+        ? parsed.pos.split(/[,、、 ]+/).filter(Boolean)[0] || ''
+        : '';
     } catch (e) {
       console.error("JSONパースエラー", e);
       setParsedResult(null);
+      return;
     }
-      // 検索後に追加する
-    // const exists = await checkIfWordExists(parsed);
-    // setIsSaved(Boolean(exists));
-}
+  
+    // ✅ tryの外で checkIfWordExists して、parsedResultにidつきで渡す
+    const existing = await checkIfWordExists(parsed);
+  
+    if (existing) {
+      setParsedResult({ ...existing, _version: Math.random() });
+      setIsSaved(true);
+    } else {
+      setParsedResult({ ...parsed, _version: Math.random() });
+      setIsSaved(false);
+    }
+  };
+
 
 const handleToggleSave = async () => {
-  const currentSaved = isSaved; // ← ここで状態をキャプチャ
-  const newValue = !currentSaved;
-
-  console.log("保存状態を更新:", newValue);
   if (!parsedResult) return;
-  console.log("保存前のparsedResult:", parsedResult);
 
-  if (currentSaved) {
+  if (isSaved) {
+    console.log("削除直前の id:", parsedResult.id);
+
     const success = await deleteWord(parsedResult);
 
     if (success) {
       toast.success("保存を取り消しました");
       setIsSaved(false);
-
-      // ✅ 削除が終わった後に id を除去
-      const copied = { ...parsedResult };
-      delete copied.id;
-      setParsedResult({ ...copied, _version: Math.random() });
+      setParsedResult(null); // or リセットしたparsedResultを渡す
+    } else {
+      toast.error("削除に失敗しました");
     }
-
   } else {
+    console.log("保存前のparsedResult:", parsedResult);
+
     const saved = await saveWord(parsedResult);
-    console.log("保存の結果（success）:", saved); // ✅ ここで saved.id が存在するか確認
 
     if (saved) {
-      console.log("削除時のid:", parsedResult.id); // ← App 側で
-      setParsedResult({ ...saved, _version: Math.random() }); // ✅ idを含めてセット
+      setIsSaved(true);
+      setParsedResult({ ...saved, _version: Math.random() });
+    } else {
+      const existing = await checkIfWordExists(parsedResult);
+      if (existing) {
+        setIsSaved(true);
+        setParsedResult({ ...existing, _version: Math.random() });
+      }
     }
-
-
   }
 };
+
 
 
   return (

@@ -9,18 +9,19 @@ export const saveWord = async (word: WordInfo): Promise<WordInfo | null> => {
   const { data, error } = await supabase
     .from('words')
     .insert([wordToSave])
-    .select('id');
+    .select()
+    .single();
 
   if (error) {
     console.log("保存エラー:", error.message);
     return null;
   }
 
-  if (data && data[0]?.id) {
-    return { ...wordToSave, id: data[0].id };
+  if (data?.id) {
+    return { ...wordToSave, id: data.id };
   }
 
-  return null;
+  return data;
 };
 
 export const deleteWord = async (word: WordInfo): Promise<boolean> => {

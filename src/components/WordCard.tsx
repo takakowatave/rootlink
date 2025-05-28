@@ -1,11 +1,13 @@
 import { FaVolumeHigh } from "react-icons/fa6";
 import type { WordInfo } from '../types';
 import { BsBookmark, BsBookmarkFill } from 'react-icons/bs';
+import Tag from './Tag';
 
 type Props = {
     word: WordInfo;
     onSave?: () => void; //何かをするけど、返り値はない関数
     isSaved?: boolean;
+    label?: "synonym" | "antonym";
 };
 
 const WordCard = ({ word, onSave, isSaved = false }: Props) => {
@@ -26,6 +28,7 @@ return (
         <div className="mt-6 ml-6">
             <div className="mt-2 flex items-start justify-between ">
                 <div className="flex items-center gap-2 mb-2">
+                        {label && <Tag type={label} />}
                     <h2 className="text-2xl font-bold">{word.word}</h2>
                 <button onClick={speak} className="text-gray-500 hover:text-gray-600 cursor-pointer transition-colors duration-150">
                     <FaVolumeHigh size={24} />

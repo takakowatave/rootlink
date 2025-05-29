@@ -1,7 +1,7 @@
 import { FaVolumeHigh } from "react-icons/fa6";
 import type { WordInfo } from '../types';
 import { BsBookmark, BsBookmarkFill } from 'react-icons/bs';
-import Tag from './Tag';
+import Tag from './Tags';
 
 type Props = {
     word: WordInfo;
@@ -10,7 +10,7 @@ type Props = {
     label?: "synonym" | "antonym";
 };
 
-const WordCard = ({ word, onSave, isSaved = false }: Props) => {
+const WordCard = ({ word, onSave, isSaved = false, label}: Props) => { //isSaved = falseで初期値入れる
 console.log("WordCard描画", isSaved)
 
 const speak = () => {

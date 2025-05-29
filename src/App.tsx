@@ -127,6 +127,7 @@ const handleToggleSave = async () => {
         {parsedResult && (
           <div key={parsedResult.word}>
           <WordCard
+            label="antonym"
             word={parsedResult}
             isSaved={isSaved}
             onSave={handleToggleSave}

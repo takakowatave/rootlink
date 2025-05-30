@@ -3,7 +3,6 @@ import type { WordInfo } from '../types';
 
 export const saveWord = async (word: WordInfo): Promise<WordInfo | null> => {
   const wordToSave = { ...word };
-  delete wordToSave._version;
   delete wordToSave.id;
 
   const { data, error } = await supabase

@@ -7,23 +7,54 @@ import toast, { Toaster } from 'react-hot-toast';
 import type { WordInfo } from './types';
 
 
+  type GeminiParsedResult = {
+    main: WordInfo;
+    synonyms?: WordInfo;
+    antonyms?: WordInfo;
+  };
+
+
 const App = () => {
   const [input, setInput] = useState("");
-  const [parsedResult, setParsedResult] = useState<WordInfo | null>(null);
-  const [isSaved, setIsSaved] = useState(false);
-  
-  const parseGeminiResponse = async () => {
+  type LabeledWord = WordInfo & { label?: "main" | "synonym" | "antonym" };
+  const [wordList, setWordList] = useState<LabeledWord[]>([]);
+  const [savedWords, setSavedWords] = useState<string[]>([]);
+
+  function isLabeledWord(word: LabeledWord | undefined): word is LabeledWord {
+  return word !== undefined;
+}
+  const parseGeminiResponse = async (): Promise<GeminiParsedResult | undefined> => {
     const prompt = `
     次の英単語「${input}」について、日本語で以下の形式の**JSON文字列のみ**を返してください。装飾や説明文は不要です。
-  
-    {
-      "word": "単語",
-      "meaning": "意味（日本語）",
-      "pos": "品詞",
-      "pronunciation": "発音記号",
-      "example": "英語の例文",
-      "translation": "例文の日本訳"
-    }
+    mainは検索結果で、mainの関連語をsynonyms、対義語をantonymsに表示してください。
+  {
+    "main": 
+      {
+        "word": "単語",
+        "meaning": "意味（日本語）",
+        "pos": "品詞",
+        "pronunciation": "発音記号",
+        "example": "英語の例文",
+        "translation": "例文の日本訳"
+      },
+    "synonyms": 
+      {
+        "word": "単語",
+        "meaning": "意味（日本語）",
+        "pos": "品詞",
+        "pronunciation": "発音記号",
+        "example": "英語の例文",
+        "translation": "例文の日本訳"
+      },
+    "antonyms": 
+      {
+        "word": "単語",
+        "meaning": "意味（日本語）",
+        "pos": "品詞",
+        "pronunciation": "発音記号",
+        "example": "英語の例文",
+        "translation": "例文の日本訳"
+      }
     `;
   
     const res = await fetch(
@@ -46,7 +77,7 @@ const App = () => {
       return parsed;
     } catch (e) {
       console.error("JSONパースエラー", e);
-      setParsedResult(null);
+      setWordList([]);
       return;
     }
   }
@@ -54,55 +85,69 @@ const App = () => {
   
   const handleSearch = async () => {
     const parsed = await parseGeminiResponse();
-    // ✅ tryの外で checkIfWordExists して、parsedResultにidつきで渡す
-    const existing = await checkIfWordExists(parsed);
+    if (!parsed) return;
+    
+    // tryの外で checkIfWordExists して、wordListにidつきで渡す
+    const existing = await checkIfWordExists(parsed?.main);
+
   
-    if (existing) {
-      setParsedResult(existing);
-      setIsSaved(true);
+    if (existing !== null) {
+      setWordList([existing]);
+      setSavedWords([...savedWords, existing.word]);
     } else {
-      setParsedResult(parsed);
-      setIsSaved(false);
+        setWordList(
+          [
+            { ...parsed.main, label: "main" } as LabeledWord,
+            parsed.synonyms
+              ? { ...parsed.synonyms, label: "synonym" } as LabeledWord
+              : undefined,
+            parsed.antonyms
+              ? { ...parsed.antonyms, label: "antonym" } as LabeledWord
+              : undefined,
+          ].filter(isLabeledWord)
+        );
+
+      setSavedWords(savedWords.filter(w => w !== parsed.main.word));
     }
   };
 
 
 const handleToggleSave = async () => {
-  if (!parsedResult) return;
+  if (!wordList.length) return;
+    const target = wordList[0];
+    
+  if (!target.word || typeof target.word !== "string") return;
+    const isSaved = savedWords.includes(target.word as string);
   if (isSaved) {
-
-    console.log("削除直前の id:", parsedResult.id);
-
-    const success = await deleteWord(parsedResult);
+    console.log("削除直前の id:", target);
+    if (!target.word) return;
+    const success = await deleteWord(target);
 
     if (success) {
       toast.success("保存を取り消しました");
-      setIsSaved(false);
+      setSavedWords(savedWords.filter(w => w !== target.word)); 
     } else {
       toast.error("削除に失敗しました");
     }
   } else {
-    console.log("保存前のparsedResult:", parsedResult);
+    console.log("保存前のwordList:", wordList);
 
-    const saved = await saveWord(parsedResult);
+    const saved = await saveWord(target);
     
     if (saved?.id) {
-      setIsSaved(true);
-      setParsedResult(saved);
+      setSavedWords([...savedWords, target.word]);
+      setWordList([saved]);
       toast.success("保存しました");
     } else {
-      const existing = await checkIfWordExists(parsedResult);
+      const existing = await checkIfWordExists(target);
       if (existing) {
-        setParsedResult(existing);
-        setIsSaved(true);
-      } else {
-        setParsedResult(parsedResult);
-        setIsSaved(false);
-      }
+        setWordList([existing]);
+        setSavedWords(savedWords.filter(w => w !== target.word));
+
+      } 
     }
 }
 };
-
 
 
   return (
@@ -124,17 +169,17 @@ const handleToggleSave = async () => {
             検索
           </button>
         </div>
-        {parsedResult && (
-          <div key={parsedResult.word}>
+        {wordList.map((word) => (
+          <div key={word.word}>
           <WordCard
-            label="antonym"
-            word={parsedResult}
-            isSaved={isSaved}
+            label={word.label}
+            word={word}
+            savedWords={savedWords}
             onSave={handleToggleSave}
           />
 
           </div>
-        )}
+        ))}
 
       </div>
     </div>

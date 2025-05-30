@@ -6,15 +6,16 @@ import Tag from './Tags';
 type Props = {
     word: WordInfo;
     onSave?: () => void; //何かをするけど、返り値はない関数
-    isSaved?: boolean;
-    label?: "synonym" | "antonym";
+    label?: "main" | "synonym" | "antonym";
+    savedWords: string[];
 };
 
-const WordCard = ({ word, onSave, isSaved = false, label}: Props) => { //isSaved = falseで初期値入れる
-console.log("WordCard描画", isSaved)
+const WordCard = ({ word, savedWords, onSave, label}: Props) => { //isSaved = falseで初期値入れる
+const isSaved = savedWords.includes(word.word);
+console.log("WordCard描画")
 
-const speak = () => {
-    const utter = new SpeechSynthesisUtterance(word.word);
+const speak = (text: string) => {
+    const utter = new SpeechSynthesisUtterance(text);
     utter.lang = "en-UK";
     speechSynthesis.speak(utter);
     utter.text = word.word + " "; 
@@ -25,12 +26,12 @@ const speak = () => {
 return (
 <div className="mb-2">
     <div className="mb-2">
-        <div className="mt-6 ml-6">
+        <div className="mt-6">
             <div className="mt-2 flex items-start justify-between ">
                 <div className="flex items-center gap-2 mb-2">
-                        {label && <Tag type={label} />}
+                        {label && label !== "main" && <Tag type={label} />}
                     <h2 className="text-2xl font-bold">{word.word}</h2>
-                <button onClick={speak} className="text-gray-500 hover:text-gray-600 cursor-pointer transition-colors duration-150">
+                <button onClick={() => speak(word.word)} className="text-gray-500 hover:text-gray-600 cursor-pointer transition-colors duration-150">
                     <FaVolumeHigh size={24} />
                 </button>
                 </div>
@@ -44,7 +45,12 @@ return (
                 <span className="text-s text-gray-500 mr-2">{word.pronunciation}</span>
                 <p className="inline-block text-gray-600 rounded text-sm mt-1 px-2 py-0.5 border border-gray-400">{word.pos}</p>
                 <p className="text-lg mt-2">{word.meaning}</p>
-                <p className="mt-2 text-gray-600">{word.example}</p>
+                <p className="mt-2 text-gray-600">
+                    {word.example}
+                    <button onClick={() => speak(word.example)} className="align-middle ml-1 text-gray-500 hover:text-gray-600 cursor-pointer transition-colors duration-150">
+                        <FaVolumeHigh size={20} />
+                    </button>
+                </p>
                 <p className="mt-2 text-gray-600">{word.translation}</p>
         </div>
         </div>

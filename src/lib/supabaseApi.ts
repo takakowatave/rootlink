@@ -3,8 +3,7 @@ import type { WordInfo } from '../types';
 
 export const saveWord = async (word: WordInfo): Promise<WordInfo | null> => {
   const wordToSave = { ...word };
-  delete wordToSave.id;
-
+  delete (wordToSave as Record<string, unknown>).label;
   const { data, error } = await supabase
     .from('words')
     .insert([wordToSave])
@@ -45,13 +44,10 @@ export const deleteWord = async (word: WordInfo): Promise<boolean> => {
 
 
 export const checkIfWordExists = async (word: WordInfo): Promise<WordInfo | null> => {
-  const { data } = await supabase
-    .from('words')
-    .select('*')
-    .match({
-      word: word.word,
-      pos: word.pos,
-    });
+  const { data } = await supabase //dataってなに
+    .from('words') //wordsはWordInfoだよね
+    .select('*') //これは全部チェックするってこと？
+    .eq('word', word.word) //品詞含むかチェック
 
-  return data?.[0] ?? null;
+  return data?.[0] ?? null; //配列の一個め？ここがおかしい？
 };

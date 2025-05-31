@@ -5,7 +5,7 @@ export type WordInfo = {
     pronunciation: string;
     example: string;
     translation: string;
-    _saved?: boolean; // ← これを追加！
-    id?: string; // ← これを追加！
+    _saved?: boolean; 
+    id?: string;
     
 };

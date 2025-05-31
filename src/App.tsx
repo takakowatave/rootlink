@@ -56,7 +56,11 @@ const App = () => {
         "translation": "例文の日本訳"
       }
     `;
-  
+
+
+
+
+    
     const res = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${import.meta.env.VITE_GEMINI_API_KEY}`,
       {
@@ -112,9 +116,9 @@ const App = () => {
   };
 
 
-const handleToggleSave = async () => {
+const handleToggleSave = async (word: WordInfo) => {
   if (!wordList.length) return;
-    const target = wordList[0];
+    const target = word;
     
   if (!target.word || typeof target.word !== "string") return;
     const isSaved = savedWords.includes(target.word as string);
@@ -136,7 +140,10 @@ const handleToggleSave = async () => {
     
     if (saved?.id) {
       setSavedWords([...savedWords, target.word]);
-      setWordList([saved]);
+      setWordList(prev =>
+        prev.map(w => w.word === saved.word ? { ...saved, label: w.label } : w)
+      )
+
       toast.success("保存しました");
     } else {
       const existing = await checkIfWordExists(target);
@@ -169,7 +176,13 @@ const handleToggleSave = async () => {
             検索
           </button>
         </div>
-        {wordList.map((word) => (
+        {
+        // wordList の中にlabel が1つでもあるか
+        wordList.some (w => w.label === "synonym" || w.label === "antonym")
+        &&      
+        // 必要なものだけを取り出す
+        (wordList.filter(w => (w.label === "synonym" || w.label === "antonym") && w.word !== "None")
+         .map((word) => (
           <div key={word.word}>
           <WordCard
             label={word.label}
@@ -179,7 +192,8 @@ const handleToggleSave = async () => {
           />
 
           </div>
-        ))}
+        ))
+        )}
 
       </div>
     </div>

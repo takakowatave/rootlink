@@ -5,7 +5,7 @@ import Tag from './Tags';
 
 type Props = {
     word: WordInfo;
-    onSave?: () => void; //何かをするけど、返り値はない関数
+    onSave?: (word: WordInfo) => void; //何かをするけど、返り値はない関数
     label?: "main" | "synonym" | "antonym";
     savedWords: string[];
 };
@@ -15,12 +15,12 @@ const isSaved = savedWords.includes(word.word);
 console.log("WordCard描画")
 
 const speak = (text: string) => {
-    const utter = new SpeechSynthesisUtterance(text);
+    const utter = new SpeechSynthesisUtterance();
+    utter.text = text;
     utter.lang = "en-UK";
-    speechSynthesis.speak(utter);
-    utter.text = word.word + " "; 
+    utter.rate = 0.9;
     speechSynthesis.cancel();
-    utter.rate = 0.9
+    speechSynthesis.speak(utter);
 };
 
 return (
@@ -36,7 +36,7 @@ return (
                 </button>
                 </div>
                 <button
-                    onClick={onSave}
+                    onClick={() => onSave?.(word)}
                     className="text-blue-500 hover:text-blue-900 transition-colors duration-150"
                 >
                     {isSaved ? <BsBookmarkFill size={24} /> : <BsBookmark size={24} />}

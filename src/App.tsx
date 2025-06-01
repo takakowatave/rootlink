@@ -16,6 +16,7 @@ import type { WordInfo } from './types';
 
 const App = () => {
   const [input, setInput] = useState("");
+  const [inputError, setInputError] = useState("");
   type LabeledWord = WordInfo & { label?: "main" | "synonym" | "antonym" };
   const [wordList, setWordList] = useState<LabeledWord[]>([]);
   const [savedWords, setSavedWords] = useState<string[]>([]);
@@ -58,9 +59,6 @@ const App = () => {
     `;
 
 
-
-
-    
     const res = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${import.meta.env.VITE_GEMINI_API_KEY}`,
       {
@@ -86,8 +84,14 @@ const App = () => {
     }
   }
 
-  
   const handleSearch = async () => {
+    if (!/^[a-zA-Z]+$/.test(input)) {
+      setInputError("アルファベットのみ入力してください");
+      return;
+    } else {
+      setInputError("");
+    }
+
     const parsed = await parseGeminiResponse();
     if (!parsed) return;
     
@@ -156,6 +160,7 @@ const handleToggleSave = async (word: WordInfo) => {
 }
 };
 
+  const mainWord = wordList.find(w => w.label === "main");
 
   return (
     <>
@@ -164,25 +169,40 @@ const handleToggleSave = async (word: WordInfo) => {
     <div className="min-h-screen bg-gray-100 flex items-start justify-center pt-12">
       <div className="bg-white p-8 rounded-2xl w-full max-w-md">
         <h1 className="text-2xl font-bold text-center mb-6">英単語検索</h1>
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            className="flex-1 border border-gray-200 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-            placeholder="検索ワードを入力"
-          />
-          <button onClick={handleSearch} className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
-            検索
-          </button>
+        <div className="mb-4">
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              className="flex-1 border border-gray-200 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              placeholder="検索ワードを入力"
+            />
+            <button 
+              onClick={handleSearch} 
+              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+              検索
+            </button>
+          </div>
+          {inputError && (
+            <p className="text-red-500 text-sm mt-2">{inputError}</p>
+          )}
         </div>
+        {mainWord && (
+          <WordCard
+            word={mainWord}
+            label="main"
+            savedWords={savedWords}
+            onSave={handleToggleSave}
+          />
+        )}
         {
         // wordList の中にlabel が1つでもあるか
         wordList.some (w => w.label === "synonym" || w.label === "antonym")
         &&      
         // 必要なものだけを取り出す
         (wordList.filter(w => (w.label === "synonym" || w.label === "antonym") && w.word !== "None")
-         .map((word) => (
+        .map((word) => (
           <div key={word.word}>
           <WordCard
             label={word.label}
@@ -193,7 +213,8 @@ const handleToggleSave = async (word: WordInfo) => {
 
           </div>
         ))
-        )}
+        )
+        }
 
       </div>
     </div>

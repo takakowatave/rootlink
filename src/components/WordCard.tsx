@@ -11,11 +11,12 @@ type Props = {
 };
 
 const WordCard = ({ word, savedWords, onSave, label}: Props) => { //isSaved = falseで初期値入れる
-const isSaved = savedWords.includes(word.word);
-console.log("WordCard描画")
 
-const speak = (text: string) => {
-    const utter = new SpeechSynthesisUtterance();
+  if (!word.word) return null;
+  const isSaved = savedWords.includes(word.word);
+  console.log(word);
+  const speak = (text: string) => {
+  const utter = new SpeechSynthesisUtterance();
     utter.text = text;
     utter.lang = "en-UK";
     utter.rate = 0.9;

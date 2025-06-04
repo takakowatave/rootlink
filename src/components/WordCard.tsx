@@ -25,12 +25,13 @@ const WordCard = ({ word, savedWords, onSave, label}: Props) => { //isSaved = fa
 };
 
 return (
-<div className="mb-2">
-    <div className="mb-2">
-        <div className="mt-6">
-            <div className="mt-2 flex items-start justify-between ">
+<div className="flex w-full">
+    <div className="mb-4 flex items-center w-full">
+    {label !== "main" && <div className="h-full w-2 bg-gray-200 rounded-full mr-4" />}
+        <div className="bg-white p-6 rounded-2xl w-full">
+            <div className="flex items-start justify-between ">
                 <div className="flex items-center gap-2 mb-2">
-                        {label && label !== "main" && <Tag type={label} />}
+                    {label && label !== "main" && <Tag type={label} />}
                     <h2 className="text-2xl font-bold">{word.word}</h2>
                 <button onClick={() => speak(word.word)} className="text-gray-500 hover:text-gray-600 cursor-pointer transition-colors duration-150">
                     <FaVolumeHigh size={24} />
@@ -60,6 +61,7 @@ return (
 };
 
 export default WordCard;
+
 
 
 

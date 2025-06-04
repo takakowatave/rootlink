@@ -164,12 +164,18 @@ const mainWord = wordList.find(w => w.label === "main");
 return (
     <>
     <Toaster position="top-center" />
-    <Layout sidebar={<Sidebar />}>
+    <Layout
+        sidebar={
+            <Sidebar
+            title={"保存した単語を\n確認してみよう"}
+            imageSrc="/fav.png"
+            buttonText="単語リストを確認"
+            linkTo="/wordlist"
+            />
+        }
+        >
 
-        <div className="bg-white p-8 rounded-2xl w-full">
-
-
-        <h1 className="text-2xl font-bold text-center mb-6">英単語検索</h1>
+        <div className="rounded-2xl w-full">
         <div className="mb-4">
         <div className="flex gap-2">
             <input
@@ -197,6 +203,8 @@ return (
             onSave={handleToggleSave}
         />
         )}
+        </div>
+        <div>
         {
         // wordList の中にlabel が1つでもあるか
         wordList.some (w => w.label === "synonym" || w.label === "antonym")
@@ -211,13 +219,10 @@ return (
             savedWords={savedWords}
             onSave={handleToggleSave}
         />
-
-        </div>
-        
+        </div> 
         ))
         )
         }
-
         </div>
     </Layout>
     </>

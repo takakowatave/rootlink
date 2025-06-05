@@ -40,14 +40,36 @@ export const deleteWord = async (word: WordInfo): Promise<boolean> => {
   return true;
 };
 
-
-
-
 export const checkIfWordExists = async (word: WordInfo): Promise<WordInfo | null> => {
-  const { data } = await supabase //dataってなに
-    .from('words') //wordsはWordInfoだよね
-    .select('*') //これは全部チェックするってこと？
-    .eq('word', word.word) //品詞含むかチェック
+  const { data } = await supabase 
+    .from('words')
+    .select('*')
+    .eq('word', word.word)
 
-  return data?.[0] ?? null; //配列の一個め？ここがおかしい？
+  return data?.[0] ?? null; 
 };
+
+// 保存 or 削除を実行する関数
+  //word: 何を保存 or 削除するか
+  //isSaved: 保存状態をもとにどっちの処理をするかを決める
+export const toggleSaveStatus = async (word: WordInfo, isSaved: boolean) => {
+  if (isSaved) {
+    const existing = await checkIfWordExists(word);
+    if (!existing) {
+      return { success: false, word };
+    }
+    const success = await deleteWord(existing);
+    return { success, word };
+  } else {
+    const existing = await checkIfWordExists(word);
+    if (existing) {
+      return { success: false, word };
+    }
+    const save = await saveWord(word);
+    return {
+      success: !!save,
+      word: save ?? word,
+    };
+  }
+};
+

@@ -2,7 +2,7 @@ import { useState } from "react";
 import '../App.css'
 import WordCard from '../components/WordCard'
 import Layout from '../components/Layout'
-import { saveWord, deleteWord, checkIfWordExists } from '../lib/supabaseApi';
+import { checkIfWordExists, toggleSaveStatus } from '../lib/supabaseApi';
 import toast, { Toaster } from 'react-hot-toast';
 import type { WordInfo } from '../types';
 import Sidebar from "../components/Sidebar";
@@ -115,48 +115,25 @@ const handleSearch = async () => {
         ].filter(isLabeledWord)
         );
 
-    setSavedWords(savedWords.filter(w => w !== parsed.main.word));
+    // setSavedWords(savedWords.filter(w => w !== parsed.main.word));
     }
 };
 
 
 const handleToggleSave = async (word: WordInfo) => {
-if (!wordList.length) return;
-    const target = word;
-    
-if (!target.word || typeof target.word !== "string") return;
-    const isSaved = savedWords.includes(target.word as string);
-if (isSaved) {
-    console.log("削除直前の id:", target);
-    if (!target.word) return;
-    const success = await deleteWord(target);
-
-    if (success) {
-    toast.success("保存を取り消しました");
-    setSavedWords(savedWords.filter(w => w !== target.word)); 
-    } else {
-    toast.error("削除に失敗しました");
-    }
-} else {
-    console.log("保存前のwordList:", wordList);
-
-    const saved = await saveWord(target);
-    
-    if (saved?.id) {
-    setSavedWords([...savedWords, target.word]);
-    setWordList(prev =>
-        prev.map(w => w.word === saved.word ? { ...saved, label: w.label } : w)
-    )
-
-    toast.success("保存しました");
-    } else {
-    const existing = await checkIfWordExists(target);
-    if (existing) {
-        setWordList([existing]);
-        setSavedWords(savedWords.filter(w => w !== target.word));
-        } 
-    }
-}
+    const isSaved = savedWords.includes(word.word); //単語が保存済みかどうかをチェック
+    const result = await toggleSaveStatus(word, isSaved);
+    if (result.success) {
+        if (isSaved) {
+        toast.success("保存を取り消しました");
+        setSavedWords(savedWords.filter(w => w !== word.word));
+        } else {
+        toast.success("保存に成功しました");
+        setSavedWords([...savedWords, result.word.word]);
+        }
+        } else { //それぞれのエラーハンドリング
+        toast.error(isSaved ? "保存の取り消しに失敗しました" : "保存に失敗しました");
+        }
 };
 
 const mainWord = wordList.find(w => w.label === "main");
@@ -228,7 +205,6 @@ return (
     </>
 );
 }
-
 
 export default Search;
 

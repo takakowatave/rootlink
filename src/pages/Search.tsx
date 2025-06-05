@@ -121,14 +121,16 @@ const handleSearch = async () => {
 
 
 const handleToggleSave = async (word: WordInfo) => {
-    const isSaved = savedWords.includes(word.word); //単語が保存済みかどうかをチェック
-    const result = await toggleSaveStatus(word, isSaved);
-   const currentWords = await fetchWordlists(); //supabaseからデータ取得
+    const currentWords = await fetchWordlists(); //supabaseからデータ取得
+    const isSaved = currentWords.some(w => w.word === word.word); //保存済みの単語と同じ文字列があるか
   //保存の上限設定
     if (!isSaved && currentWords.length >= 5) {
         toast.error("保存できる単語は5個までです");
         return;     
     }
+    const result = await toggleSaveStatus(word, isSaved);
+  //単語が保存済みかどうかをチェック
+
     if (result.success) {
         if (isSaved) {
         toast.success("保存を取り消しました");

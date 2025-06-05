@@ -21,8 +21,8 @@ const handleToggleSave = async (word: WordInfo) => {
 
   //保存の上限設定
     if (!isSaved && currentWords.length >= 5) {
-      toast.error("保存できる単語は5個までです");
-      return;     
+        toast.error("保存できる単語は5個までです");
+        return;     
     }
   // 保存が成功したらここで削除
     if (isSaved) {

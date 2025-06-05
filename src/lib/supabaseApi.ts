@@ -73,3 +73,13 @@ export const toggleSaveStatus = async (word: WordInfo, isSaved: boolean) => {
   }
 };
 
+
+// Supabaseから全保存単語を取得する関数
+export const fetchWordlists = async (): Promise<WordInfo[]> => {
+  const { data, error } = await supabase.from('words').select('*');
+  if  (error || !data) return []; //クラッシュしないように
+
+  return data.map(word => ({ //return を省いてオブジェクトを即返したいから、({ ... }) と書いてる
+    ...word, label: "main"
+  }))
+};

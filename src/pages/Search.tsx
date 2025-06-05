@@ -2,7 +2,7 @@ import { useState } from "react";
 import '../App.css'
 import WordCard from '../components/WordCard'
 import Layout from '../components/Layout'
-import { checkIfWordExists, toggleSaveStatus } from '../lib/supabaseApi';
+import { checkIfWordExists, toggleSaveStatus, fetchWordlists } from '../lib/supabaseApi';
 import toast, { Toaster } from 'react-hot-toast';
 import type { WordInfo } from '../types';
 import Sidebar from "../components/Sidebar";
@@ -123,6 +123,12 @@ const handleSearch = async () => {
 const handleToggleSave = async (word: WordInfo) => {
     const isSaved = savedWords.includes(word.word); //単語が保存済みかどうかをチェック
     const result = await toggleSaveStatus(word, isSaved);
+   const currentWords = await fetchWordlists(); //supabaseからデータ取得
+  //保存の上限設定
+    if (!isSaved && currentWords.length >= 5) {
+        toast.error("保存できる単語は5個までです");
+        return;     
+    }
     if (result.success) {
         if (isSaved) {
         toast.success("保存を取り消しました");

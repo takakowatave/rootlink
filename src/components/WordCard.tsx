@@ -14,7 +14,6 @@ const WordCard = ({ word, savedWords, onSave, label}: Props) => { //isSaved = fa
 
     if (!word.word) return null;
     const isSaved = savedWords.includes(word.word);
-    console.log(word);
     const speak = (text: string) => {
     const utter = new SpeechSynthesisUtterance();
         utter.text = text;

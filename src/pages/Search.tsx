@@ -15,6 +15,7 @@ type GeminiParsedResult = {
 
 
 const Search = () => {
+console.log("🔥 BUILD CHECK: Search page loaded");
 const [input, setInput] = useState("");
 const [inputError, setInputError] = useState("");
 type LabeledWord = WordInfo & { label?: "main" | "synonym" | "antonym" };

@@ -71,6 +71,7 @@ return (
     { //単語のリスト表示
         wordList.map(item => (
             <WordCard
+                key={item.word}
                 word={item}
                 label="main"
                 savedWords={savedWords}

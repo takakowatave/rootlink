@@ -39,6 +39,7 @@ return (
                 </div>
                 <button
                     onClick={() => onSave?.(word)}
+                    disabled={!isSaved && savedWords.length >= 5}
                     className="text-blue-500 hover:text-blue-900 transition-colors duration-150"
                 >
                     {isSaved ? <BsBookmarkFill size={24} /> : <BsBookmark size={24} />}
@@ -49,7 +50,8 @@ return (
                 <p className="text-lg mt-2">{word.meaning}</p>
                 <p className="mt-2 text-gray-600">
                     {word.example}
-                    <button onClick={() => speak(word.example)} className="align-middle ml-1 text-gray-500 hover:text-gray-600 cursor-pointer transition-colors duration-150">
+                    <button 
+                        onClick={() => speak(word.example)} className="align-middle ml-1 text-gray-500 hover:text-gray-600 cursor-pointer transition-colors duration-150">
                         <FaVolumeHigh size={20} />
                     </button>
                 </p>

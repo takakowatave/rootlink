@@ -25,8 +25,6 @@ export const saveWord = async (word: WordInfo): Promise<WordInfo | null> => {
 export const deleteWord = async (word: WordInfo): Promise<boolean> => {
   if (!word.id) return false;
 
-  console.log("削除対象の ID:", word.id); // ← これで確認もOK
-
   const { error } = await supabase
     .from('words')
     .delete()

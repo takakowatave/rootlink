@@ -20,15 +20,15 @@ const handleToggleSave = async (word: WordInfo) => {
     const isSaved = currentWords.some(w => w.word === word.word); //保存済みの単語と同じ文字列があるか
 
   //保存の上限設定
-    if (!isSaved && currentWords.length >= 5) {
-        toast.error("保存できる単語は5個までです");
+    if (!isSaved && currentWords.length >= 30) {
+        toast.error("保存できる単語は30個までです");
         return;     
     }
   // 保存が成功したらここで削除
     if (isSaved) {
       setWordList(wordList.filter(w => w.word !== word.word)); //今のリストから指定した単語を除いた配列を作る
     }
-  
+
     const result = await toggleSaveStatus(word, isSaved);
     if (result.success) {
         if (isSaved) {

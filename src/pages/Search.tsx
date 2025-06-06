@@ -87,7 +87,7 @@ const parseGeminiResponse = async (): Promise<GeminiParsedResult | undefined> =>
 
 const handleSearch = async () => {
     if (!/^[a-zA-Z]+$/.test(input)) {
-    setInputError("アルファベットのみ入力してください");
+    setInputError("アルファベット・単語のみ入力してください");
     return;
     } else {
     setInputError("");

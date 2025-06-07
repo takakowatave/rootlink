@@ -4,7 +4,8 @@ const preset = createDefaultPreset();
 
 /** @type {import('jest').Config} */
 export default {
-  testEnvironment: 'jsdom',
+  setupFilesAfterEnv: ['<rootDir>/src/setupTests.ts'],
+  testEnvironment: 'jest-fixed-jsdom',
   transform: {
     ...preset.transform,
   },
@@ -16,3 +17,5 @@ export default {
     },
   },
 };
+
+

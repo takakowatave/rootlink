@@ -1,6 +1,7 @@
 import { useState } from "react";
 import '../App.css'
 import WordCard from '../components/WordCard'
+import SearchForm from '../components/SearchForm'
 import Layout from '../components/Layout'
 import { checkIfWordExists, toggleSaveStatus, fetchWordlists } from '../lib/supabaseApi';
 import toast, { Toaster } from 'react-hot-toast';
@@ -17,6 +18,7 @@ type GeminiParsedResult = {
 const Search = () => {
 console.log("🔥 BUILD CHECK: Search page loaded");
 const [input, setInput] = useState("");
+const [isLoading, setIsLoading] = useState(false)
 const [inputError, setInputError] = useState("");
 type LabeledWord = WordInfo & { label?: "main" | "synonym" | "antonym" };
 const [wordList, setWordList] = useState<LabeledWord[]>([]);
@@ -92,13 +94,13 @@ const handleSearch = async () => {
     } else {
     setInputError("");
     }
-
+    setIsLoading(true);
+    try {
     const parsed = await parseGeminiResponse();
     if (!parsed) return;
     
     // tryの外で checkIfWordExists して、wordListにidつきで渡す
     const existing = await checkIfWordExists(parsed?.main);
-
 
     if (existing !== null) {
     setWordList([existing]);
@@ -115,9 +117,10 @@ const handleSearch = async () => {
             : undefined,
         ].filter(isLabeledWord)
         );
-
-    // setSavedWords(savedWords.filter(w => w !== parsed.main.word));
     }
+    } finally {
+      setIsLoading(false); // ← ここにすると、成功・失敗どちらでも必ず止まる！
+    } 
 };
 
 
@@ -164,18 +167,14 @@ return (
         <div className="rounded-2xl w-full">
         <div className="mb-4">
         <div className="flex gap-2">
-            <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            className="flex-1 border border-gray-200 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            <SearchForm
+            input={input}
+            onInputChange={(e) => setInput(e.target.value)}
+            onSearch={handleSearch}
+            error={inputError}
             placeholder="検索ワードを入力"
+            isLoading={isLoading}
             />
-            <button 
-            onClick={handleSearch} 
-            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
-            検索
-            </button>
         </div>
         {inputError && (
             <p className="text-red-500 text-sm mt-2">{inputError}</p>

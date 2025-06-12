@@ -13,7 +13,6 @@ export type SearchModalProps = Pick<SearchFormProps,"input" | "onInputChange" | 
         onClose: () => void; // ← 閉じるボタンなどで呼び出す（モーダル特有）
         };
 
-
 export const SearchModal = ({
     input,
     onInputChange,

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import '../App.css'
 import WordCard from '../components/WordCard'
 import SearchForm from '../components/SearchForm'
@@ -7,6 +7,7 @@ import { checkIfWordExists, toggleSaveStatus, fetchWordlists } from '../lib/supa
 import toast, { Toaster } from 'react-hot-toast';
 import type { WordInfo } from '../types';
 import Sidebar from "../components/Sidebar";
+import Fab from "../components/Fab";
 
 type GeminiParsedResult = {
     main: WordInfo;
@@ -14,15 +15,17 @@ type GeminiParsedResult = {
     antonyms?: WordInfo;
 };
 
-
 const Search = () => {
-console.log("🔥 BUILD CHECK: Search page loaded");
 const [input, setInput] = useState("");
 const [isLoading, setIsLoading] = useState(false)
 const [inputError, setInputError] = useState("");
 type LabeledWord = WordInfo & { label?: "main" | "synonym" | "antonym" };
 const [wordList, setWordList] = useState<LabeledWord[]>([]);
 const [savedWords, setSavedWords] = useState<string[]>([]);
+
+//モーダル
+// const [isModalOpen, setIsModalOpen] = useState(false);
+
 
 function isLabeledWord(word: LabeledWord | undefined): word is LabeledWord {
 return word !== undefined;
@@ -137,18 +140,42 @@ const handleToggleSave = async (word: WordInfo) => {
 
     if (result.success) {
         if (isSaved) {
-        toast.success("保存を取り消しました");
+        toast.success("単語をリストから外しました");
         setSavedWords(savedWords.filter(w => w !== word.word));
         } else {
-        toast.success("保存に成功しました");
+        toast.success("単語をリストに追加しました");
         setSavedWords([...savedWords, result.word.word]);
         }
         } else { //それぞれのエラーハンドリング
-        toast.error(isSaved ? "保存の取り消しに失敗しました" : "保存に失敗しました");
+        toast.error(isSaved ? "単語をリストから外せませんでした" : "リスト追加に失敗しました");
         }
 };
 
 const mainWord = wordList.find(w => w.label === "main");
+
+const [showFab, setShowFab] = useState(false);
+const searchFormRef = useRef<HTMLFormElement>(null);
+
+    
+    useEffect(() => {
+    // IntersectionObserverを新しく作成（entryで監視対象の状態を受け取る）
+    const observer = new IntersectionObserver(
+        ([entry]) => {
+        // 監視対象が画面内に表示されていない場合（isIntersectingがfalse）、FABを表示
+        setShowFab(!entry.isIntersecting);
+        },
+        { threshold: 0 } // 0%でも表示されていれば「見えている」と判定する
+    );
+
+    // 監視対象の要素が存在していれば、observerに登録
+    if (searchFormRef.current) {
+        observer.observe(searchFormRef.current);
+    }
+
+    // コンポーネントがアンマウントされた時、observerを解除（メモリリーク防止）
+    return () => observer.disconnect();
+    }, []);
+
 
 return (
     <>
@@ -168,17 +195,15 @@ return (
         <div className="mb-4">
         <div className="flex gap-2">
             <SearchForm
-            input={input}
-            onInputChange={(e) => setInput(e.target.value)}
-            onSearch={handleSearch}
-            error={inputError}
-            placeholder="検索ワードを入力"
-            isLoading={isLoading}
+                formRef={searchFormRef} //このDOM要素を監視対象として指定する
+                input={input}
+                onInputChange={(e) => setInput(e.target.value)}
+                onSearch={handleSearch}
+                error={inputError}
+                placeholder="検索ワードを入力"
+                isLoading={isLoading}
             />
         </div>
-        {inputError && (
-            <p className="text-red-500 text-sm mt-2">{inputError}</p>
-        )}
         </div>
         {mainWord && (
         <WordCard
@@ -210,6 +235,7 @@ return (
         }
         </div>
     </Layout>
+    <Fab isVisible={showFab} onClick={() => console.log("clicked")} />
     </>
 );
 }

@@ -8,6 +8,7 @@ import toast, { Toaster } from 'react-hot-toast';
 import type { WordInfo } from '../types';
 import Sidebar from "../components/Sidebar";
 import Fab from "../components/Fab";
+import SearchModal from "../components/SearchModal";
 
 type GeminiParsedResult = {
     main: WordInfo;
@@ -24,7 +25,7 @@ const [wordList, setWordList] = useState<LabeledWord[]>([]);
 const [savedWords, setSavedWords] = useState<string[]>([]);
 
 //モーダル
-// const [isModalOpen, setIsModalOpen] = useState(false);
+const [isModalOpen, setIsModalOpen] = useState(false);
 
 
 function isLabeledWord(word: LabeledWord | undefined): word is LabeledWord {
@@ -235,10 +236,23 @@ return (
         }
         </div>
     </Layout>
-    <Fab isVisible={showFab} onClick={() => console.log("clicked")} />
-    </>
+        {!isModalOpen && (
+            <Fab isVisible={showFab} onClick={() => setIsModalOpen(true)} />
+        )}
+        {isModalOpen && (
+            <SearchModal 
+                input={input} 
+                onInputChange={(e) => setInput(e.target.value)}
+                onSearch={handleSearch}
+                error={inputError} 
+                isLoading={isLoading} 
+                formRef={searchFormRef}
+                onClose={() => setIsModalOpen(false)}
+                isOpen={isModalOpen}
+                />
+            )}
+</>
 );
 }
 
 export default Search;
-

@@ -242,7 +242,7 @@ return (
         {isModalOpen && (
             <SearchModal 
                 input={input} 
-                onInputChange={(e) => setInput(e.target.value)}
+                onInputChange={(e: React.ChangeEvent<HTMLInputElement>) => setInput(e.target.value)}
                 onSearch={handleSearch}
                 error={inputError} 
                 isLoading={isLoading} 

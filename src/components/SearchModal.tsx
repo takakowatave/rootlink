@@ -1,5 +1,5 @@
 import SearchForm from './SearchForm';
-import type { SearchFormProps } from "../components/SearchForm";
+import type { SearchFormProps } from "./SearchForm";
 
 // フォームを表示する責任（= SearchForm の再利用）
 // 表示・非表示を切り替える責任（= モーダル）

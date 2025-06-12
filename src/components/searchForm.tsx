@@ -1,14 +1,5 @@
 import { FiSearch } from 'react-icons/fi';
-
-export type SearchFormProps = {
-    input: string; //ユーザーが記入する部分
-    onInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void; //input要素で入力が変わったときその情報を受け取って何かをする関数
-    onSearch: () => void; //検索ボタンが押されたときに呼ばれる処理
-    error?: string; //エラー文言？
-    placeholder: string;
-    isLoading: boolean;
-    formRef: React.RefObject<HTMLFormElement | null>;
-}
+import type { SearchFormProps } from '../types/SearchFormProps';
 
 const SearchForm = ({ 
     formRef, input, onInputChange, onSearch, error, placeholder, isLoading }: SearchFormProps) => {

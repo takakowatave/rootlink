@@ -27,6 +27,7 @@ const SearchForm = ({
                 onChange={onInputChange}
                 className="flex-1 px-2 py-1 focus:outline-none rounded-full"
                 placeholder={placeholder}
+                enterKeyHint="search"
             />
             {isLoading && <div className={spinnerClass} />}
             </form>

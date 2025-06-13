@@ -24,9 +24,15 @@ type LabeledWord = WordInfo & { label?: "main" | "synonym" | "antonym" };
 const [wordList, setWordList] = useState<LabeledWord[]>([]);
 const [savedWords, setSavedWords] = useState<string[]>([]);
 
-//モーダル
+//SP専用モーダル
 const [isModalOpen, setIsModalOpen] = useState(false);
 
+const handleSearchInModal = async () => {
+    await handleSearch(); // もとの処理
+    if (window.innerWidth < 768) {
+        setIsModalOpen(false); // SPだけ閉じる
+    }
+};
 
 function isLabeledWord(word: LabeledWord | undefined): word is LabeledWord {
 return word !== undefined;
@@ -243,14 +249,15 @@ return (
             <SearchModal 
                 input={input} 
                 onInputChange={(e: React.ChangeEvent<HTMLInputElement>) => setInput(e.target.value)}
-                onSearch={handleSearch}
                 error={inputError} 
                 isLoading={isLoading} 
                 formRef={searchFormRef}
                 onClose={() => setIsModalOpen(false)}
                 isOpen={isModalOpen}
+                onSearch={handleSearchInModal}
                 />
             )}
+        
 </>
 );
 }

@@ -96,7 +96,7 @@ const parseGeminiResponse = async (): Promise<GeminiParsedResult | undefined> =>
     }
 }
 
-const handleSearch = async (inputRef?: React.RefObject<HTMLInputElement | null>) => {
+const handleSearch = async (inputRef?: React.RefObject<HTMLInputElement | null>, shouldCloseModal: boolean = false) => {
     if (!/^[a-zA-Z]+$/.test(input)) {
     setInputError("アルファベット・単語のみ入力してください");
     return;
@@ -131,6 +131,10 @@ const handleSearch = async (inputRef?: React.RefObject<HTMLInputElement | null>)
         setIsLoading(false); // 成功・失敗どちらでも必ず止まるように
         setHasSearched(true); //emptyのカード出すための処理
         inputRef?.current?.blur(); // 検索後のフォーカスを外すための処理
+      
+        if (shouldCloseModal) {
+          setIsModalOpen(false);
+        }
     } 
 };
 
@@ -260,7 +264,7 @@ return (
                 formRef={searchFormRef}
                 onClose={() => setIsModalOpen(false)}
                 isOpen={isModalOpen}
-                onSearch={() => handleSearch(inputRef)}
+                onSearch={() => handleSearch(inputRef, true)}
                 inputRef={inputRef}
                 />
             )}

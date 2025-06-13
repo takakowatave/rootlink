@@ -10,17 +10,19 @@ export type SearchModalProps = Pick<SearchFormProps,"input" | "onInputChange" | 
         //新しいpropsで追加したい型
         isOpen: boolean;   // ← 表示されてるかどうか（モーダル特有）
         onClose: () => void; // ← 閉じるボタンなどで呼び出す（モーダル特有）
+        inputRef: React.RefObject<HTMLInputElement | null>;
         };
 
 export const SearchModal = ({
     input,
+    isOpen,
     onInputChange,
     onSearch,
     error,
     isLoading,
     onClose,
     formRef,
-    isOpen
+    inputRef
 }: SearchModalProps) => {
 
 
@@ -38,6 +40,7 @@ export const SearchModal = ({
                 error={error}
                 placeholder="検索ワードを入力"
                 isLoading={isLoading}
+                inputRef={inputRef}
                 />
             </div>
             </div>

@@ -2,7 +2,7 @@ import { FiSearch } from 'react-icons/fi';
 import type { SearchFormProps } from '../types/SearchFormProps';
 
 const SearchForm = ({ 
-    formRef, input, onInputChange, onSearch, error, placeholder, isLoading }: SearchFormProps) => {
+    formRef, input, inputRef, onInputChange, onSearch, error, placeholder, isLoading }: SearchFormProps) => {
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         onSearch();
@@ -21,6 +21,7 @@ const SearchForm = ({
             >
             <FiSearch className="text-gray-400 w-5 h-5" />
             <input
+                ref={inputRef}
                 type="text"
                 value={input}
                 onChange={onInputChange}

@@ -6,4 +6,5 @@ export type SearchFormProps = {
     placeholder: string;
     isLoading: boolean;
     formRef: React.RefObject<HTMLFormElement | null>;
+    inputRef: React.RefObject<HTMLInputElement | null>;
 };

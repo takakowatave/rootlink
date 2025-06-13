@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import '../App.css'
 import WordCard from '../components/WordCard'
@@ -27,12 +28,10 @@ const [savedWords, setSavedWords] = useState<string[]>([]);
 //SP専用モーダル
 const [isModalOpen, setIsModalOpen] = useState(false);
 
-const handleSearchInModal = async () => {
-    await handleSearch(); // もとの処理
-    if (window.innerWidth < 768) {
-        setIsModalOpen(false); // SPだけ閉じる
-    }
-};
+const [showFab, setShowFab] = useState(false);
+const searchFormRef = useRef<HTMLFormElement>(null);
+
+//PC
 
 function isLabeledWord(word: LabeledWord | undefined): word is LabeledWord {
 return word !== undefined;
@@ -97,7 +96,7 @@ const parseGeminiResponse = async (): Promise<GeminiParsedResult | undefined> =>
     }
 }
 
-const handleSearch = async () => {
+const handleSearch = async (inputRef?: React.RefObject<HTMLInputElement | null>) => {
     if (!/^[a-zA-Z]+$/.test(input)) {
     setInputError("アルファベット・単語のみ入力してください");
     return;
@@ -129,10 +128,11 @@ const handleSearch = async () => {
         );
     }
     } finally {
-      setIsLoading(false); // ← ここにすると、成功・失敗どちらでも必ず止まる！
+        setIsLoading(false); // 成功・失敗どちらでも必ず止まるように
+        setHasSearched(true); //emptyのカード出すための処理
+        inputRef?.current?.blur(); // 検索後のフォーカスを外すための処理
     } 
 };
-
 
 const handleToggleSave = async (word: WordInfo) => {
     const currentWords = await fetchWordlists(); //supabaseからデータ取得
@@ -159,10 +159,6 @@ const handleToggleSave = async (word: WordInfo) => {
 };
 
 const mainWord = wordList.find(w => w.label === "main");
-
-const [showFab, setShowFab] = useState(false);
-const searchFormRef = useRef<HTMLFormElement>(null);
-
     
     useEffect(() => {
     // IntersectionObserverを新しく作成（entryで監視対象の状態を受け取る）
@@ -184,6 +180,12 @@ const searchFormRef = useRef<HTMLFormElement>(null);
     }, []);
 
 
+  //検索前の最初のステート管理
+    const [hasSearched, setHasSearched] = useState(false);
+
+  //フォームのフォーカスを外すための処理
+    const inputRef = useRef<HTMLInputElement>(null);
+
 return (
     <>
     <Toaster position="top-center" />
@@ -202,16 +204,20 @@ return (
         <div className="mb-4">
         <div className="flex gap-2">
             <SearchForm
+                inputRef={inputRef}
                 formRef={searchFormRef} //このDOM要素を監視対象として指定する
                 input={input}
                 onInputChange={(e) => setInput(e.target.value)}
-                onSearch={handleSearch}
+                onSearch={() => handleSearch(inputRef)}
                 error={inputError}
                 placeholder="検索ワードを入力"
                 isLoading={isLoading}
             />
         </div>
         </div>
+        {!hasSearched && (
+        <img src="/empty.png" alt="empty card" className="w-full mx-auto rounded-2xl bg-white border border-gray-200" />
+        )}
         {mainWord && (
         <WordCard
             word={mainWord}
@@ -254,7 +260,8 @@ return (
                 formRef={searchFormRef}
                 onClose={() => setIsModalOpen(false)}
                 isOpen={isModalOpen}
-                onSearch={handleSearchInModal}
+                onSearch={() => handleSearch(inputRef)}
+                inputRef={inputRef}
                 />
             )}
         

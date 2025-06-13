@@ -32,7 +32,6 @@ const [showFab, setShowFab] = useState(false);
 const searchFormRef = useRef<HTMLFormElement>(null);
 
 //PC
-
 function isLabeledWord(word: LabeledWord | undefined): word is LabeledWord {
 return word !== undefined;
 }
@@ -131,9 +130,11 @@ const handleSearch = async (inputRef?: React.RefObject<HTMLInputElement | null>,
         setIsLoading(false); // 成功・失敗どちらでも必ず止まるように
         setHasSearched(true); //emptyのカード出すための処理
         inputRef?.current?.blur(); // 検索後のフォーカスを外すための処理
-      
+        window.scrollTo({ top: 0, behavior: "smooth" }); //検索した後は画面の一番上に戻るように
+
+
         if (shouldCloseModal) {
-          setIsModalOpen(false);
+        setIsModalOpen(false);
         }
     } 
 };
@@ -141,13 +142,13 @@ const handleSearch = async (inputRef?: React.RefObject<HTMLInputElement | null>,
 const handleToggleSave = async (word: WordInfo) => {
     const currentWords = await fetchWordlists(); //supabaseからデータ取得
     const isSaved = currentWords.some(w => w.word === word.word); //保存済みの単語と同じ文字列があるか
-  //保存の上限設定
+    //保存の上限設定
     if (!isSaved && currentWords.length >= 30) {
         toast.error("保存できる単語は30個までです");
         return;     
     }
     const result = await toggleSaveStatus(word, isSaved);
-  //単語が保存済みかどうかをチェック
+    //単語が保存済みかどうかをチェック
 
     if (result.success) {
         if (isSaved) {
@@ -162,7 +163,7 @@ const handleToggleSave = async (word: WordInfo) => {
         }
 };
 
-const mainWord = wordList.find(w => w.label === "main");
+    const mainWord = wordList.find(w => w.label === "main");
     
     useEffect(() => {
     // IntersectionObserverを新しく作成（entryで監視対象の状態を受け取る）

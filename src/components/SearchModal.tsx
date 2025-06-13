@@ -29,6 +29,7 @@ export const SearchModal = ({
         {isOpen && (
             <div className="fixed inset-0 bg-black bg-opacity-40 z-40">
             <div className="fixed bottom-0 left-0 w-full bg-white shadow-md p-4 z-50">
+                <button onClick={onClose}>閉じる</button>
                 <SearchForm
                 formRef={formRef}
                 input={input}
@@ -38,7 +39,6 @@ export const SearchModal = ({
                 placeholder="検索ワードを入力"
                 isLoading={isLoading}
                 />
-                <button onClick={onClose}>閉じる</button>
             </div>
             </div>
         )}

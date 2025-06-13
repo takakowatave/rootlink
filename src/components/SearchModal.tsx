@@ -1,8 +1,6 @@
 import SearchForm from './SearchForm';
 import type { SearchFormProps } from '../types/SearchFormProps';
-
-// フォームを表示する責任（= SearchForm の再利用）
-// 表示・非表示を切り替える責任（= モーダル）
+import { useEffect } from "react";
 
 //pickを使ってsearchFormPropsからカスタマイズする
 export type SearchModalProps = Pick<SearchFormProps,"input" | "onInputChange" | "onSearch" | "error" | "isLoading" | "formRef"> 
@@ -25,13 +23,19 @@ export const SearchModal = ({
     inputRef
 }: SearchModalProps) => {
 
-
+    //モーダルを開いてすぐ編集できるようにする処理
+    useEffect(() => {
+        if (isOpen) {
+        inputRef.current?.focus();//今 ref が指してる実際のDOMがnullでなければfocus
+        }
+    },[isOpen]);
+    
     return (
     <>
         {isOpen && (
             <div className="fixed inset-0 bg-black bg-opacity-40 z-40">
             <div className="fixed bottom-0 left-0 w-full bg-white shadow-md p-4 z-50">
-                <button onClick={onClose}>閉じる</button>
+                <button className="text-blue-600 mb-4" onClick={onClose}>閉じる</button>
                 <SearchForm
                 formRef={formRef}
                 input={input}

@@ -27,10 +27,10 @@ return (
 <div className="flex w-full">
     <div className="mb-4 flex items-center w-full">
     {label !== "main" && <div className="h-full w-2 bg-gray-200 rounded-full mr-4" />}
-        <div className="bg-white p-6 rounded-2xl w-full">
+        <div data-testid="word-card" className="bg-white p-6 rounded-2xl w-full">
             <div className="flex items-start justify-between ">
                 <div className="flex items-center gap-2 mb-2">
-                    {label && label !== "main" && <Tag type={label} />}
+                    {label && label !== "main" && <Tag type={label} data-testid={`tag-${label}`} />}
                     <h2 className="text-2xl font-bold">{word.word}</h2>
                 <button onClick={() => speak(word.word)} className="text-gray-500 hover:text-gray-600 cursor-pointer transition-colors duration-150">
                     <FaVolumeHigh size={24} />

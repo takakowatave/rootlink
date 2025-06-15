@@ -9,5 +9,6 @@ test('仮テスト', () => {
         <Header />
         </MemoryRouter>
     );
-    expect(screen.getByAltText('logo')).toBeInTheDocument();
+    const logos = screen.getAllByAltText('logo');
+    expect(logos[0]).toBeInTheDocument();
 });

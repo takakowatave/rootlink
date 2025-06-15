@@ -15,9 +15,10 @@ export const Tag = ({type}: Props) => {
         };
 
         return (
-        <span className={`${base} ${styles[type]}`}>
-        {`${labels[type]}`}
+        <span data-testid={`tag-${type}`} className={`${base} ${styles[type]}`}>
+            {labels[type]}
         </span>
+
     );
 }
 

@@ -7,8 +7,6 @@ import toast, { Toaster } from 'react-hot-toast';
 import type { WordInfo } from '../types';
 import Sidebar from "../components/Sidebar";
 
-
-
 const WordList = () => {
 type LabeledWord = WordInfo & { label?: "main" | "synonym" | "antonym" };
 const [wordList, setWordList] = useState<LabeledWord[]>([]);
@@ -76,6 +74,7 @@ return (
                 label="main"
                 savedWords={savedWords}
                 onSave={handleToggleSave}
+                data-testid="saved-word"
             />
         ))
         

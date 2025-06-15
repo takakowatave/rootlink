@@ -72,7 +72,7 @@ const parseGeminiResponse = async (): Promise<GeminiParsedResult | undefined> =>
 
 
     const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${import.meta.env.VITE_GEMINI_API_KEY}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.VITE_GEMINI_API_KEY!}`,
     {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -83,7 +83,7 @@ const parseGeminiResponse = async (): Promise<GeminiParsedResult | undefined> =>
     );
     const data = await res.json();
     const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
+    console.log("Gemini API response:", data);
     try {
     const cleaned = rawText?.replace(/```json|```/g, '').trim();
     if (!cleaned) throw new Error("空のレスポンス");
@@ -142,9 +142,9 @@ const handleSearch = async (inputRef?: React.RefObject<HTMLInputElement | null>,
         setIsLoading(false); // 成功・失敗どちらでも必ず止まるように
         setHasSearched(true); //emptyのカード出すための処理
         inputRef?.current?.blur(); // 検索後のフォーカスを外すための処理
-      
+
         if (shouldCloseModal) {
-          setIsModalOpen(false);
+            setIsModalOpen(false);
         }
     } 
 };

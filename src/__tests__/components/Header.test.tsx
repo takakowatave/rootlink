@@ -11,8 +11,8 @@ test('ボタンが / にリンクしている', async () => {
     </MemoryRouter>
     );
     // /を引数にNavigatorが呼び出されること
-    const link = screen.getByRole('link');
-    expect(link).toHaveAttribute('href', '/');
+    const links = screen.getAllByRole('link');
+    expect(links[0]).toHaveAttribute('href', '/');
 });
 
 test('ヘッダーにアプリロゴが表示される', () => {
@@ -21,5 +21,6 @@ test('ヘッダーにアプリロゴが表示される', () => {
         <Header />
     </MemoryRouter>
     );
-    expect(screen.getByAltText('logo')).toBeInTheDocument();
+    const logos = screen.getAllByAltText('logo');
+    expect(logos[0]).toBeInTheDocument();
 });

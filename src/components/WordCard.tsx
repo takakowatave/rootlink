@@ -40,8 +40,9 @@ return (
                     onClick={() => onSave?.(word)}
                     disabled={!isSaved && savedWords.length >= 5}
                     className="text-blue-500 hover:text-blue-900 transition-colors duration-150"
+                    aria-label="save"
                 >
-                    {isSaved ? <BsBookmarkFill size={24} /> : <BsBookmark size={24} />}
+                    {isSaved ? <BsBookmarkFill data-testid="bookmark-fill" size={24} /> : <BsBookmark size={24} />}
                 </button>
             </div>
                 <span className="text-s text-gray-500 mr-2">{word.pronunciation}</span>

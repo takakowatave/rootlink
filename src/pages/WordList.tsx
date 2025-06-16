@@ -66,19 +66,19 @@ return (
             />
         }
         >
-    { //単語のリスト表示
-        wordList.map(item => (
-            <WordCard
-                key={item.word}
-                word={item}
-                label="main"
-                savedWords={savedWords}
-                onSave={handleToggleSave}
-                data-testid="saved-word"
-            />
-        ))
-        
-    }
+    {[...wordList]
+      .slice() // コピーして
+      .reverse() // 順番を逆にする
+      .map(item => (
+        <WordCard
+          key={item.word}
+          word={item}
+          label="main"
+          savedWords={savedWords}
+          onSave={handleToggleSave}
+          data-testid="saved-word"
+        />
+    ))}
         </Layout>
     </>
 );

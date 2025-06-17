@@ -17,7 +17,7 @@ const WordCard = ({ word, savedWords, onSave, label}: Props) => { //isSaved = fa
     const speak = (text: string) => {
     const utter = new SpeechSynthesisUtterance();
         utter.text = text;
-        utter.lang = "en-UK";
+        utter.lang = "en-GB";
         utter.rate = 0.9;
         speechSynthesis.cancel();
         speechSynthesis.speak(utter);
@@ -25,9 +25,9 @@ const WordCard = ({ word, savedWords, onSave, label}: Props) => { //isSaved = fa
 
 return (
 <div className="flex w-full">
-    <div className="mb-4 flex items-center w-full">
-    {label !== "main" && <div className="h-full w-2 bg-gray-200 rounded-full mr-4" />}
-        <div data-testid="word-card" className="bg-white p-6 rounded-2xl w-full">
+    <div className="mb-2 md:mb-4 flex items-center w-full bg-white md:bg-gray-100">
+    {label !== "main" && <div className="h-[90%] w-1 md:w-2 ml-2 md:py-2 my-4 bg-gray-200 rounded-2xl md:rounded-1xl md:mr-4" />}
+        <div data-testid="word-card" className="bg-white p-4 md:rounded-2xl md:p-6 w-full">
             <div className="flex items-start justify-between ">
                 <div className="flex items-center gap-2 mb-2">
                     {label && label !== "main" && <Tag type={label} data-testid={`tag-${label}`} />}
@@ -63,7 +63,3 @@ return (
 };
 
 export default WordCard;
-
-
-
-

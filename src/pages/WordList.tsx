@@ -69,14 +69,14 @@ return (
     {[...wordList]
       .slice() // コピーして
       .reverse() // 順番を逆にする
-      .map(item => (
-        <WordCard
-          key={item.word}
-          word={item}
-          label="main"
-          savedWords={savedWords}
-          onSave={handleToggleSave}
-          data-testid="saved-word"
+        .map(item => (
+            <WordCard
+            key={item.word}
+            word={item}
+            label="main"
+            savedWords={savedWords}
+            onSave={handleToggleSave}
+            data-testid="saved-word"
         />
     ))}
         </Layout>

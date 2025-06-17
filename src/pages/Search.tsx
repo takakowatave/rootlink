@@ -112,7 +112,9 @@ const handleSearch = async (inputRef?: React.RefObject<HTMLInputElement | null>,
     if (
     parsed &&
     (parsed.main.meaning.includes("該当する単語は見つかりません") ||
-    parsed.main.meaning.includes("存在しません"))
+    parsed.main.meaning.includes("存在しません") ||
+    parsed.main.meaning.includes("N/A") 
+    )
     ) {
     setWordList([]);
     return;

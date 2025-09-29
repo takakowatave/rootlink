@@ -3,6 +3,6 @@ import react from "@vitejs/plugin-react";
 import env from "vite-plugin-env-compatible";
 
 export default defineConfig({
-    base: './',   // ← ここを修正
+    base: '/',   // ← ここを修正
     plugins: [react(), env({ prefix: "VITE", mountedPath: "process.env" })],
 });

@@ -46,7 +46,7 @@ return (
                 </button>
             </div>
                 <span className="text-s text-gray-500 mr-2">{word.pronunciation}</span>
-                <p className="inline-block text-gray-600 rounded text-sm mt-1 px-2 py-0.5 border border-gray-400">{word.pos}</p>
+                <p className="inline-block text-gray-600 rounded text-sm mt-1 px-2 py-0.5 border border-gray-400">{word.partOfSpeech}</p>
                 <p className="text-lg mt-2">{word.meaning}</p>
                 <p className="mt-2 text-gray-600">
                     {word.example}

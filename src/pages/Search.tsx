@@ -38,22 +38,30 @@ const Search = () => {
     word: string
   ): Promise<GeminiParsedResult | undefined> => {
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/chat`, {
+      const API_URL = import.meta.env.VITE_CLOUDRUN_API_URL;
+
+      if (!API_URL) {
+        throw new Error("VITE_CLOUDRUN_API_URL is not defined");
+      }
+
+      const res = await fetch(`${API_URL}/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: word }),
       });
 
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+
       const data = await res.json();
-      console.log("Hono API response:", data);
+      console.log("🌐 Hono API response:", data);
 
-      const cleaned = data.reply?.replace(/```json|```/g, "").trim();
-      if (!cleaned) throw new Error("空のレスポンス");
-
-      const parsed: GeminiParsedResult = JSON.parse(cleaned);
+      // サーバー側でJSONを返している場合はこれでOK
+      const parsed: GeminiParsedResult = data;
       return parsed;
     } catch (err) {
-      console.error("JSONパースエラー:", err);
+      console.error("❌ JSONパースエラー:", err);
       toast.error("AIからの応答を解析できませんでした");
       return;
     }
@@ -81,13 +89,15 @@ const Search = () => {
         setWordList([existing]);
         setSavedWords([...savedWords, existing.word]);
       } else {
-        // ✅ undefined を含まない安全な配列構築
-    const labeledList: LabeledWord[] = [
-    { ...parsed.main, label: "main" as const },
-    ...(parsed.synonyms ? [{ ...parsed.synonyms, label: "synonym" as const }] : []),
-    ...(parsed.antonyms ? [{ ...parsed.antonyms, label: "antonym" as const }] : []),
-    ];
-
+        const labeledList: LabeledWord[] = [
+          { ...parsed.main, label: "main" as const },
+          ...(parsed.synonyms
+            ? [{ ...parsed.synonyms, label: "synonym" as const }]
+            : []),
+          ...(parsed.antonyms
+            ? [{ ...parsed.antonyms, label: "antonym" as const }]
+            : []),
+        ];
 
         setWordList(labeledList);
       }

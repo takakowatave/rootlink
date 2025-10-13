@@ -28,7 +28,7 @@ const mockResponse = {
   main: {
     word: "move",
     meaning: "動く、移動する",
-    pos: "動詞",
+    partOfSpeech: "動詞",
     pronunciation: "/muːv/",
     example: "He moved to a new house.",
     translation: "彼は新しい家に引っ越した。"
@@ -36,7 +36,7 @@ const mockResponse = {
   synonyms: {
     word: "shift",
     meaning: "移す",
-    pos: "動詞",
+    partOfSpeech: "動詞",
     pronunciation: "/ʃɪft/",
     example: "He shifted the table.",
     translation: "彼はテーブルを移動した。"
@@ -44,7 +44,7 @@ const mockResponse = {
   antonyms: {
     word: "stay",
     meaning: "とどまる",
-    pos: "動詞",
+    partOfSpeech: "動詞",
     pronunciation: "/steɪ/",
     example: "She stayed at home.",
     translation: "彼女は家にとどまった。"

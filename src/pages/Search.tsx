@@ -1,3 +1,4 @@
+// ✅ Search.tsx
 import { useState, useRef, useEffect } from "react";
 import "../App.css";
 import WordCard from "../components/WordCard";
@@ -10,14 +11,16 @@ import toast, { Toaster } from "react-hot-toast";
 import type { WordInfo } from "../types";
 import { checkIfWordExists, toggleSaveStatus } from "../lib/supabaseApi";
 
-// ✅ OpenAIのパース結果型
-type GeminiParsedResult = {
+type AiParsedResult = {
   main: WordInfo;
-  synonyms?: WordInfo;
-  antonyms?: WordInfo;
+  related?: {
+    synonyms?: string[];
+    antonyms?: string[];
+    derivedWords?: string[];
+    collocations?: string[];
+  };
 };
 
-// ✅ UI上で扱う型（main / synonym / antonym のラベル付き）
 type LabeledWord = WordInfo & { label?: "main" | "synonym" | "antonym" };
 
 const Search = () => {
@@ -33,16 +36,13 @@ const Search = () => {
   const searchFormRef = useRef<HTMLFormElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // ✅ Cloud Run 経由で Hono → OpenAI を呼び出し & パース
+  // ✅ Cloud Run経由でAI呼び出し
   const parseOpenAIResponse = async (
     word: string
-  ): Promise<GeminiParsedResult | undefined> => {
+  ): Promise<AiParsedResult | undefined> => {
     try {
       const API_URL = import.meta.env.VITE_CLOUDRUN_API_URL;
-
-      if (!API_URL) {
-        throw new Error("VITE_CLOUDRUN_API_URL is not defined");
-      }
+      if (!API_URL) throw new Error("VITE_CLOUDRUN_API_URL is not defined");
 
       const res = await fetch(`${API_URL}/chat`, {
         method: "POST",
@@ -50,21 +50,25 @@ const Search = () => {
         body: JSON.stringify({ message: word }),
       });
 
-      if (!res.ok) {
-        throw new Error(`HTTP error! status: ${res.status}`);
-      }
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
 
-      const data = await res.json();
-      console.log("🌐 Hono API response:", data);
-
-      // サーバー側でJSONを返している場合はこれでOK
-      const parsed: GeminiParsedResult = data;
-      return parsed;
+      return await res.json();
     } catch (err) {
       console.error("❌ JSONパースエラー:", err);
       toast.error("AIからの応答を解析できませんでした");
-      return;
     }
+  };
+
+  // ✅ 単語を詳細化（保湿）
+  const hydrateWord = async (word: LabeledWord): Promise<LabeledWord> => {
+    // すでに meaning があるならスキップ
+    if (word.meaning) return word;
+
+    const detail = await parseOpenAIResponse(word.word);
+    if (detail?.main) {
+      return { ...detail.main, label: word.label };
+    }
+    return word;
   };
 
   // ✅ 検索実行
@@ -75,11 +79,10 @@ const Search = () => {
     if (!/^[a-zA-Z]+$/.test(input)) {
       setInputError("アルファベットのみ入力してください");
       return;
-    } else {
-      setInputError("");
     }
-
+    setInputError("");
     setIsLoading(true);
+
     try {
       const parsed = await parseOpenAIResponse(input);
       if (!parsed) return;
@@ -89,17 +92,32 @@ const Search = () => {
         setWordList([existing]);
         setSavedWords([...savedWords, existing.word]);
       } else {
+        // main + synonym + antonym
         const labeledList: LabeledWord[] = [
-          { ...parsed.main, label: "main" as const },
-          ...(parsed.synonyms
-            ? [{ ...parsed.synonyms, label: "synonym" as const }]
-            : []),
-          ...(parsed.antonyms
-            ? [{ ...parsed.antonyms, label: "antonym" as const }]
-            : []),
+          { ...parsed.main, label: "main" },
+          ...(parsed.related?.synonyms?.map((s) => ({
+            word: s,
+            meaning: "",
+            partOfSpeech: [],
+            pronunciation: "",
+            example: "",
+            translation: "",
+            label: "synonym" as const,
+          })) ?? []),
+          ...(parsed.related?.antonyms?.map((a) => ({
+            word: a,
+            meaning: "",
+            partOfSpeech: [],
+            pronunciation: "",
+            example: "",
+            translation: "",
+            label: "antonym"as const,
+          })) ?? []),
         ];
 
-        setWordList(labeledList);
+        // ✅ 関連語も詳細情報を取得してから表示
+        const hydrated = await Promise.all(labeledList.map(hydrateWord));
+        setWordList(hydrated);
       }
     } finally {
       setIsLoading(false);
@@ -109,7 +127,6 @@ const Search = () => {
     }
   };
 
-  // ✅ スクロール監視で Fab 表示制御
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => setShowFab(!entry.isIntersecting),

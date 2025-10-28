@@ -16,7 +16,9 @@ const handleToggleSave = async (word: WordInfo) => {
    const currentWords = await fetchWordlists(); //supabaseからデータ取得
   //単語が保存済みかどうかをチェック
     const isSaved = currentWords.some(w => w.word === word.word); //保存済みの単語と同じ文字列があるか
-    
+  console.log("isSaved:", isSaved);
+  console.log("word.word:", word.word);
+  console.log("savedWords:", savedWords);
   //保存の上限設定
     if (!isSaved && currentWords.length >= 30) {
         toast.error("保存できる単語は30個までです");
@@ -50,6 +52,7 @@ useEffect(() => {
         };
     
         loadSavedWords(); //用意した関数を最後に実行
+        
     }, []);
 
 
@@ -73,7 +76,7 @@ return (
             <WordCard
             key={item.word}
             word={item}
-            label="main"
+            // label="main"
             savedWords={savedWords}
             onSave={handleToggleSave}
             data-testid="saved-word"

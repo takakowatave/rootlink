@@ -94,31 +94,52 @@ const Search = () => {
       } else {
         // main + synonym + antonym
         const labeledList: LabeledWord[] = [
-          { ...parsed.main, label: "main" },
-          ...(parsed.related?.synonyms?.map((s) => ({
-            word: s,
-            meaning: "",
-            partOfSpeech: [],
-            pronunciation: "",
-            example: "",
-            translation: "",
-            label: "synonym" as const,
-          })) ?? []),
-          ...(parsed.related?.antonyms?.map((a) => ({
-            word: a,
-            meaning: "",
-            partOfSpeech: [],
-            pronunciation: "",
-            example: "",
-            translation: "",
-            label: "antonym"as const,
-          })) ?? []),
+          { ...parsed.main, label: "main" as const },
+          
+
+        // ✅ 関連語（synonyms）→ 1つだけ取得
+        ...(parsed.related?.synonyms
+          ? parsed.related.synonyms.slice(0, 1).map((s) => ({
+              word: s,
+              meaning: "",
+              partOfSpeech: [],
+              pronunciation: "",
+              example: "",
+              translation: "",
+              label: "synonym" as const,
+            }))
+          : []),
+
+        // ✅ 対義語（antonyms）→ 1つだけ取得
+        ...(parsed.related?.antonyms
+          ? parsed.related.antonyms.slice(0, 1).map((a) => ({
+              word: a,
+              meaning: "",
+              partOfSpeech: [],
+              pronunciation: "",
+              example: "",
+              translation: "",
+              label: "antonym" as const,
+            }))
+          : []),
         ];
 
-        // ✅ 関連語も詳細情報を取得してから表示
-        const hydrated = await Promise.all(labeledList.map(hydrateWord));
-        setWordList(hydrated);
+      // ✅ 関連語も詳細情報を取得してから表示
+      const hydrated = await Promise.all(labeledList.map(hydrateWord));
+
+      // ✅ 各カテゴリで1件ずつに絞る
+      const filtered = hydrated.filter((w, i, arr) =>
+        w.label === "main" ||
+        (w.label === "synonym" &&
+          arr.findIndex(x => x.label === "synonym") === i) ||
+        (w.label === "antonym" &&
+          arr.findIndex(x => x.label === "antonym") === i)
+      );
+
+      // ✅ 表示用リストをセット
+      setWordList(filtered);
       }
+      
     } finally {
       setIsLoading(false);
       setHasSearched(true);
@@ -177,7 +198,7 @@ const Search = () => {
 
           {wordList.map((word) => (
             <WordCard
-              key={word.word}
+              key={`${word.word}-${savedWords.includes(word.word)}`} // 👈 これに変更！
               label={word.label}
               word={word}
               savedWords={savedWords}

@@ -2,10 +2,20 @@ import { supabase } from './supabaseClient';
 import type { WordInfo } from '../types';
 
 export const saveWord = async (word: WordInfo): Promise<WordInfo | null> => {
-  const wordToSave = { ...word };
+  // ① ログイン中のユーザーを取得
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    console.log("未ログインのため保存できません");
+    return null;
+  }
+
+  // ② 保存データに user_id を追加
+  const wordToSave = { ...word, user_id: user.id };
   delete (wordToSave as Record<string, unknown>).label;
+
+  // ③ Supabase に保存
   const { data, error } = await supabase
-    .from('words')
+    .from("words")
     .insert([wordToSave])
     .select()
     .single();

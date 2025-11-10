@@ -6,10 +6,13 @@ export type PartOfSpeech =
     | 'auxiliary' | 'article';
 
 export type WordInfo = {
-    word: string;
-    pronunciation: string;
-    partOfSpeech: PartOfSpeech[]; 
-    meaning: string;
-    example: string;
-    translation: string;
+  id?: string;         // ← これを追加（単語の主キー）
+  user_id?: string;    // ← これも追加（SupabaseユーザーID）
+  word: string;
+  meaning: string;
+  partOfSpeech?: string[];
+  pronunciation?: string;
+  example?: string;
+  translation?: string;
+  // ほかに使ってるフィールドがあればそのままでOK
 };

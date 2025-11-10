@@ -28,7 +28,7 @@ const WordCard = ({ word, savedWords, onSave, label }: Props) => {
 
     // --- 3️⃣ 品詞（partOfSpeech）を正規化してリスト化 ---
     // 例: "verbnoun" → ["verb", "noun"]
-    const posList = normalizePOS(word.partOfSpeech);
+    const posList = normalizePOS(word.partOfSpeech ?? []);
 
     // --- 4️⃣ 発音機能 ---
     // SpeechSynthesis API を使って、英単語や例文を音声で再生する
@@ -113,7 +113,7 @@ const WordCard = ({ word, savedWords, onSave, label }: Props) => {
             <p className="mt-2 text-gray-600">
                 {word.example}
                 <button
-                onClick={() => speak(word.example)}
+                onClick={() => speak(word.example ?? "")}
                 className="align-middle ml-1 text-gray-500 hover:text-gray-600 cursor-pointer transition-colors duration-150"
                 >
                 <FaVolumeHigh size={20} />

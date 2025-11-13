@@ -1,14 +1,17 @@
 import { useState } from "react";
 import { apiRequest } from "../lib/apiClient";
+// import { useNavigate } from "react-router-dom"; // ← 追加！
 
 export default function AuthSignup() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [msg, setMsg] = useState("");
+    // const navigate = useNavigate(); // ← 追加！
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setMsg("登録中...");
+
         try {
         const res = await apiRequest("/auth/signup", {
             method: "POST",
@@ -20,6 +23,8 @@ export default function AuthSignup() {
             setMsg("❌ エラー: " + res.error);
         } else if (res.user) {
             setMsg("✅ 登録成功: " + res.user.email);
+            // ✅ 成功時にホームへ遷移
+            // navigate("/"); // ← これを追加
         } else {
             setMsg("⚠️ 不明なレスポンス");
         }

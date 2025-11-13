@@ -6,6 +6,8 @@ import { fetchWordlists, toggleSaveStatus } from '../lib/supabaseApi';
 import toast, { Toaster } from 'react-hot-toast';
 import type { WordInfo } from '../types';
 import Sidebar from "../components/Sidebar";
+import { supabase } from "../lib/supabaseClient";
+
 
 const WordList = () => {
 type LabeledWord = WordInfo & { label?: "main" | "synonym" | "antonym" };
@@ -45,15 +47,21 @@ const handleToggleSave = async (word: WordInfo) => {
 
 //supabaseで保存した単語をリスト表示する
 useEffect(() => {
-    const loadSavedWords = async () => {
-        const words = await fetchWordlists();
-        setWordList(words);
-        setSavedWords(words.map(w => w.word)); //wordsから .word だけを抜き出して、savedWords の状態に保存
-        };
-    
-        loadSavedWords(); //用意した関数を最後に実行
-        
-    }, []);
+  const loadSavedWords = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast.error("ログインが必要です");
+      return;
+    }
+
+    const words = await fetchWordlists();
+    setWordList(words);
+    setSavedWords(words.map(w => w.word));
+  };
+
+  loadSavedWords();
+}, []);
+
 
 
 return (

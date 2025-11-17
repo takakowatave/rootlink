@@ -1,56 +1,87 @@
-import { useState } from "react";
+import { useForm } from "react-hook-form";
 import { apiRequest } from "../lib/apiClient";
-// import { useNavigate } from "react-router-dom"; // ← 追加！
+import { TextInput } from "../components/TextInput";
+import Button from "../components/button";
+
+interface FormData {
+    email: string;
+    password: string;
+}
 
 export default function AuthSignup() {
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [msg, setMsg] = useState("");
-    // const navigate = useNavigate(); // ← 追加！
+    const {
+        register,
+        handleSubmit,
+        formState: { errors, isSubmitting },
+        setError,
+        reset,
+    } = useForm<FormData>();
 
-    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        setMsg("登録中...");
-
+    const onSubmit = async (data: FormData) => {
         try {
         const res = await apiRequest("/auth/signup", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email, password }),
+            body: JSON.stringify(data),
         });
 
-        if (res.error) {
-            setMsg("❌ エラー: " + res.error);
-        } else if (res.user) {
-            setMsg("✅ 登録成功: " + res.user.email);
-            // ✅ 成功時にホームへ遷移
-            // navigate("/"); // ← これを追加
-        } else {
-            setMsg("⚠️ 不明なレスポンス");
+        if ("error" in res) {
+            setError("email", { message: res.error });
+            return;
         }
+
+        reset();
+        alert("確認メールを送信しました ✔︎");
         } catch (err) {
-        setMsg(err instanceof Error ? "❌ " + err.message : "サインアップに失敗しました");
+        setError("email", {
+            message:
+            err instanceof Error ? err.message : "サインアップに失敗しました",
+        });
         }
     };
 
     return (
-        <form onSubmit={handleSubmit} className="flex flex-col gap-3 w-80 mx-auto mt-10">
-        <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Email"
-            className="border p-2 rounded"
-        />
-        <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Password"
-            className="border p-2 rounded"
-        />
-        <button className="bg-emerald-600 text-white py-2 rounded">サインアップ</button>
-        <p className="text-sm text-gray-600">{msg}</p>
-        </form>
+    <div className="flex justify-center bg-gray-100 px-4 pt-16">
+        <div className="bg-white shadow-xl rounded-2xl p-6 w-full max-w-md">
+            <h1 className="text-3xl font-bold text-center text-green-700 mb-2">
+            RootLink
+            </h1>
+            <h2 className="text-lg font-semibold text-center mb-6">
+            アカウント新規作成
+            </h2>
+
+            <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+            <TextInput
+                label="メールアドレス"
+                type="email"
+                error={errors.email}
+                {...register("email", { required: "メールアドレスは必須です" })}
+            />
+
+            <div>
+                <TextInput
+                label="パスワード"
+                type="password"
+                error={errors.password}
+                {...register("password", { required: "パスワードは必須です" })}
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                半角アルファベット、大文字、数字、記号を組み合わせて8文字以上で設定してください。
+                </p>
+            </div>
+
+            <Button
+                type="submit"
+                text={isSubmitting ? "登録中..." : "新規作成"}
+                disabled={isSubmitting}
+                variant="primary"
+            />
+            </form>
+
+            <p className="text-center text-xs text-gray-400 mt-6">
+            ©Rootlink2025. All rights reserved.
+            </p>
+        </div>
+        </div>
     );
 }

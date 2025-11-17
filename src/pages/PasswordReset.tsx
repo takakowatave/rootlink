@@ -1,18 +1,15 @@
-// src/pages/AuthLogin.tsx
+// src/pages/PasswordReset.tsx
 import { useForm } from "react-hook-form";
 import { apiRequest } from "../lib/apiClient";
-import { useNavigate, Link } from "react-router-dom";  // ← Link を追加
 import { TextInput } from "../components/TextInput";
 import Button from "../components/button";
+import { useNavigate } from "react-router-dom";
 
 interface FormData {
     email: string;
-    password: string;
 }
 
-export default function AuthLogin() {
-    const navigate = useNavigate();
-
+export default function PasswordReset() {
     const {
         register,
         handleSubmit,
@@ -20,26 +17,25 @@ export default function AuthLogin() {
         setError,
     } = useForm<FormData>();
 
+    const navigate = useNavigate();
+
     const onSubmit = async (data: FormData) => {
         try {
-            const res = await apiRequest("/auth/login", {
+            const res = await apiRequest("/auth/password/reset", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(data),
             });
 
-            if ("session" in res) {
-                localStorage.setItem("access_token", res.session.access_token);
-                navigate("/");
-            } else if ("error" in res) {
+            if ("error" in res) {
                 setError("email", { message: res.error });
-            } else {
-                setError("email", { message: "不明なレスポンスです。" });
+                return;
             }
+
+            navigate("/password/reset/sent", { state: { email: data.email } });
         } catch (err) {
             setError("email", {
-                message:
-                    err instanceof Error ? err.message : "ログインに失敗しました。",
+                message: err instanceof Error ? err.message : "送信に失敗しました",
             });
         }
     };
@@ -51,7 +47,7 @@ export default function AuthLogin() {
                     RootLink
                 </h1>
                 <h2 className="text-lg font-semibold text-center mb-6">
-                    アカウントにログイン
+                    パスワード変更メールを送信
                 </h2>
 
                 <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
@@ -61,35 +57,12 @@ export default function AuthLogin() {
                         error={errors.email}
                         {...register("email", { required: "メールアドレスは必須です" })}
                     />
-
-                    <TextInput
-                        label="パスワード"
-                        type="password"
-                        error={errors.password}
-                        {...register("password", { required: "パスワードは必須です" })}
-                    />
-
                     <Button
                         type="submit"
-                        text={isSubmitting ? "ログイン中..." : "ログイン"}
+                        text={isSubmitting ? "送信中..." : "送信"}
                         disabled={isSubmitting}
-                        variant="primary"
                     />
                 </form>
-
-                {/* ▼ これを追加（リンク部分） */}
-                <div className="text-center mt-4">
-                    <Link
-                        to="/password/request"
-                        className="text-blue-600 text-sm hover:underline"
-                    >
-                        パスワードを忘れた方
-                    </Link>
-                </div>
-
-                <p className="text-center text-xs text-gray-400 mt-6">
-                    ©Rootlink2025. All rights reserved.
-                </p>
             </div>
         </div>
     );

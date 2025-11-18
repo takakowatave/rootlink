@@ -11,7 +11,7 @@ interface FormData {
     const { hash } = useLocation();
     const navigate = useNavigate();
 
-    // ハッシュ（#access_token=xxx）をパース
+    // #access_token=xxx をパース
     const params = new URLSearchParams(hash.replace("#", "?"));
     const accessToken = params.get("access_token");
 
@@ -28,24 +28,22 @@ interface FormData {
 
     const onSubmit = async ({ password }: FormData) => {
         try {
-        // ⭐ supabase にアクセストークンをセット
+        // ① Supabase セッション設定
         const { error: sessionError } = await supabase.auth.setSession({
             access_token: accessToken,
-            refresh_token: "", // ここは空でOK
+            refresh_token: accessToken, // ← ★ここが重要
         });
 
         if (sessionError) {
-            setError("password", { message: "セッション設定に失敗しました。" });
+            setError("password", { message: sessionError.message });
             return;
         }
 
-        // ⭐ パスワードを更新
-        const { error } = await supabase.auth.updateUser({
-            password,
-        });
+        // ② パスワード更新
+        const { error } = await supabase.auth.updateUser({ password });
 
         if (error) {
-            setError("password", { message: "パスワード更新に失敗しました。" });
+            setError("password", { message: error.message });
             return;
         }
 
@@ -72,9 +70,7 @@ interface FormData {
                 type="password"
                 placeholder="新しいパスワード"
                 className="border p-2 rounded"
-                {...register("password", {
-                required: "パスワードは必須です",
-                })}
+                {...register("password", { required: "パスワードは必須です" })}
             />
             {errors.password && (
                 <p className="text-red-500 text-sm">{errors.password.message}</p>

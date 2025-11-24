@@ -5,6 +5,7 @@ import Search from "./Search";
 import WordList from "./WordList";
 import AuthSignup from "./AuthSignup";
 import AuthLogin from "./AuthLogin";
+import Profile from "./Profile";
 
 // ← 実際に存在しているファイル名に合わせる
 import ResetPasswordRequest from "./ResetPasswordRequest"; 
@@ -26,6 +27,8 @@ const App = () => {
       <Route path="/password/request" element={<ResetPasswordRequest />} />
       <Route path="/password/reset" element={<PasswordReset />} />
       <Route path="/password/update" element={<PasswordUpdate />} />
+
+      <Route path="/profile" element={<Profile />} />
     </Routes>
   );
 };

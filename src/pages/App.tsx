@@ -6,7 +6,7 @@ import WordList from "./WordList";
 import AuthSignup from "./AuthSignup";
 import AuthLogin from "./AuthLogin";
 import Profile from "./Profile";
-
+import AuthCallback from "./AuthCallback";
 // ← 実際に存在しているファイル名に合わせる
 import ResetPasswordRequest from "./ResetPasswordRequest"; 
 import PasswordReset from "./PasswordReset";
@@ -29,6 +29,7 @@ const App = () => {
       <Route path="/password/update" element={<PasswordUpdate />} />
 
       <Route path="/profile" element={<Profile />} />
+      <Route path="/auth/callback" element={<AuthCallback />} />
     </Routes>
   );
 };

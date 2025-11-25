@@ -15,7 +15,7 @@ COPY . .
 RUN npm run build
 
 # 6. このサーバーはポート3000で待ち受けます
-EXPOSE 3000
+EXPOSE 4000
 
 # 7. サーバーを起動するコマンド
 CMD ["npx", "tsx", "functions/index.ts"]

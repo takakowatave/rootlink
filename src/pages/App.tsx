@@ -1,35 +1,25 @@
-// src/App.tsx
 import { Routes, Route } from "react-router-dom";
+import Layout from "../components/Layout";
 
 import Search from "./Search";
 import WordList from "./WordList";
-import AuthSignup from "./AuthSignup";
-import AuthLogin from "./AuthLogin";
 import Profile from "./Profile";
-import AuthCallback from "./AuthCallback";
-// ← 実際に存在しているファイル名に合わせる
-import ResetPasswordRequest from "./ResetPasswordRequest"; 
-import PasswordReset from "./PasswordReset";
-import PasswordUpdate from "./PasswordUpdate";
+
+// 認証系（Layout なし）
+import AuthLogin from "./AuthLogin";
+import AuthSignup from "./AuthSignup";
 
 const App = () => {
   return (
     <Routes>
-      {/* メイン */}
-      <Route path="/" element={<Search />} />
-      <Route path="/wordlist" element={<WordList />} />
+      {/* Layout を使うページ */}
+      <Route path="/" element={<Layout><Search /></Layout>} />
+      <Route path="/wordlist" element={<Layout><WordList /></Layout>} />
+      <Route path="/profile" element={<Layout><Profile /></Layout>} />
 
-      {/* 認証 */}
-      <Route path="/signup" element={<AuthSignup />} />
+      {/* Layout を使わないページ */}
       <Route path="/login" element={<AuthLogin />} />
-
-      {/* パスワード関連 */}
-      <Route path="/password/request" element={<ResetPasswordRequest />} />
-      <Route path="/password/reset" element={<PasswordReset />} />
-      <Route path="/password/update" element={<PasswordUpdate />} />
-
-      <Route path="/profile" element={<Profile />} />
-      <Route path="/auth/callback" element={<AuthCallback />} />
+      <Route path="/signup" element={<AuthSignup />} />
     </Routes>
   );
 };

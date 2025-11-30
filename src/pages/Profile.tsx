@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
+import { FaUserCircle } from "react-icons/fa";
+import { Link } from "react-router-dom";
+import type { Profile } from "../types/Profile";   // ← any禁止
 
-export default function Profile() {
-  const [profile, setProfile] = useState<any>(null);
+export default function ProfilePage() {
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -17,9 +20,9 @@ export default function Profile() {
         .from("profiles")
         .select("*")
         .eq("id", user.id)
-        .single();
+        .single<Profile>(); // ← 型を指定して any 回避
 
-      if (!error) setProfile(data);
+      if (!error && data) setProfile(data);
       setLoading(false);
     };
 
@@ -30,31 +33,62 @@ export default function Profile() {
   if (!profile) return <p className="mt-20 text-center">プロフィールが見つかりません。</p>;
 
   return (
-    <div className="flex justify-center bg-gray-100 px-4 py-12">
-      <div className="bg-white shadow-xl rounded-2xl p-8 w-full max-w-xl">
+    <div className="flex justify-center bg-gray-100 min-h-screen px-4 py-10">
+      <div className="bg-white shadow-sm rounded-2xl p-10 w-full max-w-3xl">
 
-        <h1 className="text-3xl font-bold text-center text-green-700 mb-6">
-          RootLink
-        </h1>
-        <h2 className="text-xl font-semibold mb-6">プロフィール</h2>
+        <h2 className="text-2xl font-semibold mb-6">プロフィール</h2>
 
-        <div className="flex items-center gap-6 mb-8">
-          <img
-            src={profile.avatar_url || "/default-avatar.png"}
-            alt="avatar"
-            className="w-20 h-20 rounded-full border"
-          />
-          <div>
+        {/* --- 名前セクション --- */}
+        <section className="flex items-center gap-6 mb-10">
+          <FaUserCircle className="w-20 h-20 text-gray-300" />
+
+          <div className="flex-1">
             <p className="text-sm text-gray-500">表示される名前</p>
-            <p className="text-lg font-medium">{profile.username}</p>
+            <p className="text-lg font-medium">
+              {profile.username ?? "未設定"}
+            </p>
           </div>
-        </div>
 
-        <div className="mb-6">
+          <button className="px-4 py-1 text-blue-500 border border-blue-400 rounded-full text-sm">
+            編集
+          </button>
+        </section>
+
+        <hr className="mb-10" />
+
+        {/* --- メールアドレス --- */}
+        <section className="mb-8">
           <p className="text-sm text-gray-500">メールアドレス</p>
-          <p className="text-lg">{profile.email}</p>
-        </div>
+          <div className="flex items-center justify-between">
+            <p className="text-lg">{profile.email}</p>
 
+            <button className="px-4 py-1 text-blue-500 border border-blue-400 rounded-full text-sm">
+              編集
+            </button>
+          </div>
+        </section>
+
+        {/* --- パスワード --- */}
+        <section className="mb-10">
+          <p className="text-sm text-gray-500">パスワード</p>
+          <div className="flex items-center justify-between">
+            <p className="text-gray-600 text-sm">アカウントにログインするためのパスワード</p>
+
+            <Link to="/password/update">
+              <button className="px-4 py-1 text-blue-500 border border-blue-400 rounded-full text-sm">
+                編集
+              </button>
+            </Link>
+          </div>
+        </section>
+
+        {/* --- ログアウト --- */}
+        <button
+          className="flex items-center gap-2 text-left text-gray-700 hover:text-black transition"
+          onClick={() => supabase.auth.signOut()}
+        >
+          ログアウト
+        </button>
       </div>
     </div>
   );

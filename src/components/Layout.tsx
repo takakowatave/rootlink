@@ -1,25 +1,22 @@
-import Header from '../components/Header'
+import Header from "../components/Header";
 
 const Layout = ({
     children,
-    sidebar,
     }: {
     children: React.ReactNode;
-    sidebar?: React.ReactNode;
-    }) => (
+    }) => {
+    return (
+        <>
+        <Header />
 
-
-    <>
-
-    <Header />
-    <div className=" w-full bg-gray-100 min-h-screen">
-        <main className="flex pt-8 flex-col md:flex-row gap-4 max-w-[800px] w-full mx-auto">
-            <section className="basis-4/5">{children}</section>
-            <aside className="basis-2/5">{sidebar}</aside>
-        </main>
-    </div>
-</>
-
-);
+        {/* 全体背景・コンテンツ幅固定（800px） */}
+        <div className="w-full bg-gray-100 min-h-screen flex justify-center">
+            <main className="pt-8 w-full max-w-[800px] px-4">
+            {children}
+            </main>
+        </div>
+        </>
+    );
+};
 
 export default Layout;

@@ -9,21 +9,42 @@ export const saveWord = async (word: WordInfo): Promise<boolean> => {
   const user = res.data.user;
   if (!user) return false;
 
-  const { error } = await supabase
+  // ① words に単語そのものを保存
+  const { data: insertedWord, error: wordErr } = await supabase
+    .from("words")
+    .upsert({
+      word: word.word,
+      meaning: word.meaning,
+      partOfSpeech: word.partOfSpeech,
+      pronunciation: word.pronunciation,
+      example: word.example,
+      translation: word.translation,
+    })
+    .select()
+    .single();
+
+  if (wordErr || !insertedWord) {
+    console.log("words 保存エラー:", wordErr?.message);
+    return false;
+  }
+
+  // ② saved_words に user と word の紐付けを入れる
+  const { error: saveErr } = await supabase
     .from("saved_words")
     .insert({
       user_id: user.id,
-      word_id: word.id,
+      word_id: insertedWord.id,
       status: "saved",
     });
 
-  if (error) {
-    console.log("保存エラー:", error.message);
+  if (saveErr) {
+    console.log("保存エラー:", saveErr.message);
     return false;
   }
 
   return true;
 };
+
 
 /* =========================================
    ② 単語削除（saved_words から削除）

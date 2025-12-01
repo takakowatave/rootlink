@@ -8,6 +8,7 @@ import Profile from "./Profile";
 // 認証系（Layout なし）
 import AuthLogin from "./AuthLogin";
 import AuthSignup from "./AuthSignup";
+import AuthCallback from "./AuthCallback";
 
 const App = () => {
   return (
@@ -20,6 +21,7 @@ const App = () => {
       {/* Layout を使わないページ */}
       <Route path="/login" element={<AuthLogin />} />
       <Route path="/signup" element={<AuthSignup />} />
+      <Route path="/auth/callback" element={<AuthCallback />} />
     </Routes>
   );
 };

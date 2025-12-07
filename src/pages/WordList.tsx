@@ -11,8 +11,83 @@ const WordList = () => {
 
   const [wordList, setWordList] = useState<LabeledWord[]>([]);
   const [savedWords, setSavedWords] = useState<string[]>([]);
+  const [editingWordId, setEditingWordId] = useState<string | null>(null);
 
-  // 保存・削除切り替え
+  // -----------------------------
+  // タグ更新処理（Supabase）
+  // -----------------------------
+  const updateTags = async (savedWordId: string, tags: string[]) => {
+
+    // ⭐ Supabase の返却構造を TS に教える
+    type ExistingLink = {
+      tag_id: string;
+      tag: { name: string } | null;
+    };
+
+    const { data } = await supabase
+      .from("saved_word_tags")
+      .select(`
+        tag_id,
+        tag:tag_id (
+          name
+        )
+      `)
+      .eq("saved_word_id", savedWordId);
+
+    const existingLinks = data as ExistingLink[] | null;
+
+    const existingTagNames =
+      existingLinks?.map((row) => row.tag?.name ?? "") ?? [];
+
+    const toAdd = tags.filter((t) => !existingTagNames.includes(t));
+    const toRemove = existingTagNames.filter((t) => !tags.includes(t));
+
+    // --- 追加処理 ---
+    for (const name of toAdd) {
+      let { data: tag } = await supabase
+        .from("tag")
+        .select("*")
+        .eq("name", name)
+        .single();
+
+      if (!tag) {
+        const { data: newTag } = await supabase
+          .from("tag")
+          .insert({ name })
+          .select()
+          .single();
+        tag = newTag;
+      }
+
+      await supabase.from("saved_word_tags").insert({
+        saved_word_id: savedWordId,
+        tag_id: tag.id,
+      });
+    }
+
+    // --- 削除処理 ---
+    for (const name of toRemove) {
+      const { data: tag } = await supabase
+        .from("tag")
+        .select("*")
+        .eq("name", name)
+        .single();
+
+      if (!tag) continue;
+
+      await supabase
+        .from("saved_word_tags")
+        .delete()
+        .eq("saved_word_id", savedWordId)
+        .eq("tag_id", tag.id);
+    }
+
+    toast.success("タグを更新しました！");
+  };
+
+  // -----------------------------
+  // 保存・削除
+  // -----------------------------
   const handleToggleSave = async (word: WordInfo) => {
     const res = await supabase.auth.getUser();
     const currentUser = res.data.user;
@@ -25,18 +100,15 @@ const WordList = () => {
     const currentWords = await fetchWordlists(currentUser.id);
     const isSaved = currentWords.some((w) => w.word === word.word);
 
-    // 上限チェック
-    if (!isSaved && currentWords.length >= 30) {
-      toast.error("保存できる単語は30個までです");
+    if (!isSaved && currentWords.length >= 500) {
+      toast.error("保存できる単語は500個までです");
       return;
     }
 
-    // 表示から削除（削除の場合）
     if (isSaved) {
       setWordList((prev) => prev.filter((w) => w.word !== word.word));
     }
 
-    // supabase 更新
     const result = await toggleSaveStatus(word, isSaved);
 
     if (result.success) {
@@ -47,19 +119,16 @@ const WordList = () => {
         toast.success("保存しました");
         setSavedWords((prev) => [...prev, result.word.word]);
       }
-    } else {
-      toast.error("更新に失敗しました");
     }
   };
 
+  // -----------------------------
   // 初期ロード
+  // -----------------------------
   useEffect(() => {
     const loadSavedWords = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        toast.error("ログインが必要です");
-        return;
-      }
+      if (!user) return;
 
       const words = await fetchWordlists(user.id);
       setWordList(words);
@@ -69,25 +138,28 @@ const WordList = () => {
     loadSavedWords();
   }, []);
 
+  // -----------------------------
+  // レンダリング
+  // -----------------------------
   return (
     <>
       <Toaster position="top-center" />
 
-      {/* Layout は使わない（App.tsxで包む） */}
       <div className="w-full">
-        {/* 右側サイドバーは App の Layout に任せる */}
-        {[...wordList]
-          .slice()
-          .reverse()
-          .map((item) => (
-            <WordCard
-              key={item.word}
-              word={item}
-              savedWords={savedWords}
-              onSave={handleToggleSave}
-              data-testid="saved-word"
-            />
-          ))}
+        {[...wordList].slice().reverse().map((item) => (
+          <WordCard
+            key={item.id}
+            word={item}
+            savedWords={savedWords}
+            onSave={handleToggleSave}
+            isEditing={editingWordId === item.id}
+            onEdit={() => setEditingWordId(item.id)}
+            onFinishEdit={(tags) => {
+              updateTags(item.id, tags);
+              setEditingWordId(null);
+            }}
+          />
+        ))}
       </div>
     </>
   );

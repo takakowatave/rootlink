@@ -149,34 +149,3 @@ export const fetchWordlists = async (userId: string): Promise<WordInfo[]> => {
     };
   });
 };
-
-/* =========================================
-   ⑥ プロフィール更新
-========================================= */
-export const updateProfile = async (
-  username: string | null,
-  avatar_url: string | null,
-  bio: string | null
-): Promise<{ success: boolean; error?: string }> => {
-  const res = await supabase.auth.getUser();
-  const user = res.data.user;
-  if (!user) {
-    return { success: false, error: "ログインが必要です" };
-  }
-
-  const { error } = await supabase
-    .from("profiles")
-    .update({
-      username,
-      avatar_url,
-      bio,
-    })
-    .eq("id", user.id);
-
-  if (error) {
-    console.log("プロフィール更新エラー:", error.message);
-    return { success: false, error: error.message };
-  }
-
-  return { success: true };
-};

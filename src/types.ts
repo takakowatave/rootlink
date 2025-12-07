@@ -6,7 +6,7 @@ export type PartOfSpeech =
     | 'auxiliary' | 'article';
 
 export type WordInfo = {
-  id?: string;         // ← これを追加（単語の主キー）
+  id: string;         // ← これを追加（単語の主キー）
   user_id?: string;    // ← これも追加（SupabaseユーザーID）
   word: string;
   meaning: string;
@@ -14,5 +14,6 @@ export type WordInfo = {
   pronunciation?: string;
   example?: string;
   translation?: string;
+  tags?: string[]; 
   // ほかに使ってるフィールドがあればそのままでOK
 };

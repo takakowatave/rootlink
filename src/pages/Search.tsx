@@ -39,6 +39,7 @@ const Search = () => {
 
   const searchFormRef = useRef<HTMLFormElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [editingWordId, setEditingWordId] = useState<string | null>(null);
 
   // ----- AI API -----
   const parseOpenAIResponse = async (word: string): Promise<AiParsedResult | undefined> => {
@@ -200,6 +201,9 @@ const Search = () => {
                 toast.error("失敗しました");
               }
             }}
+            isEditing={editingWordId === word.word}
+            onEdit={() => setEditingWordId(word.word)}
+            onFinishEdit={() => setEditingWordId(null)}
           />
         ))}
       </div>

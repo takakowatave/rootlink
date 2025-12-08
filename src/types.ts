@@ -5,15 +5,17 @@ export type PartOfSpeech =
     | 'conjunction' | 'interjection' | 'particle'
     | 'auxiliary' | 'article';
 
-export type WordInfo = {
-  id: string;         // ← これを追加（単語の主キー）
-  user_id?: string;    // ← これも追加（SupabaseユーザーID）
-  word: string;
-  meaning: string;
-  partOfSpeech?: string[];
-  pronunciation?: string;
-  example?: string;
-  translation?: string;
-  tags?: string[]; 
-  // ほかに使ってるフィールドがあればそのままでOK
-};
+    export type WordInfo = {
+      saved_id: string | null;   // ← saved_words.id（タグ保存用）
+      word_id: string;           // ← words.id（辞書用）
+    
+      word: string;
+      meaning: string;
+      partOfSpeech?: string[];
+      pronunciation?: string;
+      example?: string;
+      translation?: string;
+    
+      tags?: string[];
+    };
+    

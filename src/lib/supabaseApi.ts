@@ -1,25 +1,31 @@
-import { supabase } from './supabaseClient';
-import type { WordInfo } from '../types';
+import { supabase } from "./supabaseClient";
+import type { WordInfo } from "../types";
 
 /* =========================================
-   ① 単語を保存（saved_words に保存）
+ ① 単語を保存（words → saved_words へ登録）
 ========================================= */
 export const saveWord = async (word: WordInfo): Promise<boolean> => {
-  const res = await supabase.auth.getUser();
-  const user = res.data.user;
+  const { data: auth } = await supabase.auth.getUser();
+  const user = auth?.user;
   if (!user) return false;
 
-  // ① words に単語そのものを保存
+  // ---------------------------
+  // 1) dictionaryデータ（words）を upsert
+  // ---------------------------
   const { data: insertedWord, error: wordErr } = await supabase
     .from("words")
-    .upsert({
-      word: word.word,
-      meaning: word.meaning,
-      partOfSpeech: word.partOfSpeech,
-      pronunciation: word.pronunciation,
-      example: word.example,
-      translation: word.translation,
-    })
+    .upsert(
+      {
+        id: word.word_id, // すでに存在する場合はそのIDを使用
+        word: word.word,
+        meaning: word.meaning,
+        partOfSpeech: word.partOfSpeech,
+        pronunciation: word.pronunciation,
+        example: word.example,
+        translation: word.translation,
+      },
+      { onConflict: "id" }
+    )
     .select()
     .single();
 
@@ -28,7 +34,9 @@ export const saveWord = async (word: WordInfo): Promise<boolean> => {
     return false;
   }
 
-  // ② saved_words に user と word の紐付けを入れる
+  // ---------------------------
+  // 2) saved_words（ユーザーの保存単語）へ登録
+  // ---------------------------
   const { error: saveErr } = await supabase
     .from("saved_words")
     .insert({
@@ -45,20 +53,21 @@ export const saveWord = async (word: WordInfo): Promise<boolean> => {
   return true;
 };
 
-
 /* =========================================
-   ② 単語削除（saved_words から削除）
+ ② 単語削除（saved_words から削除）
 ========================================= */
 export const deleteWord = async (word: WordInfo): Promise<boolean> => {
-  const res = await supabase.auth.getUser();
-  const user = res.data.user;
+  const { data: auth } = await supabase.auth.getUser();
+  const user = auth?.user;
   if (!user) return false;
 
+  // ❗ 誤りだった: eq("word_id", word.id)
+  // ✔ 正しい: saved_words.word_id は Dictionary の words.id
   const { error } = await supabase
     .from("saved_words")
     .delete()
     .eq("user_id", user.id)
-    .eq("word_id", word.id);
+    .eq("word_id", word.word_id);
 
   if (error) {
     console.log("削除エラー:", error.message);
@@ -69,18 +78,18 @@ export const deleteWord = async (word: WordInfo): Promise<boolean> => {
 };
 
 /* =========================================
-   ③ 該当単語が保存されているか確認
-   ❌ BEFORE: boolean を返していた
-   ✔ AFTER: WordInfo | null を返すように修正
+ ③ 単語が保存済みかチェック
+ ※ WordInfo | null を返す
 ========================================= */
 export const checkIfWordExists = async (word: WordInfo): Promise<WordInfo | null> => {
-  const res = await supabase.auth.getUser();
-  const user = res.data.user;
-  if (!user) return null;   // ← 修正: boolean → null
+  const { data: auth } = await supabase.auth.getUser();
+  const user = auth?.user;
+  if (!user) return null;
 
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("saved_words")
     .select(`
+      id,
       word_id,
       words!inner (
         id,
@@ -90,22 +99,36 @@ export const checkIfWordExists = async (word: WordInfo): Promise<WordInfo | null
         pronunciation,
         example,
         translation
+      ),
+      saved_word_tags (
+        tag:tag_id ( name )
       )
     `)
     .eq("user_id", user.id)
-    .eq("word_id", word.id)
+    .eq("word_id", word.word_id)
     .maybeSingle();
 
-  if (!data) return null;   // ← 修正: boolean → null
+  if (error || !data) return null;
 
-  // ← 修正: 配列の可能性も考慮して単体を返す
   const w = Array.isArray(data.words) ? data.words[0] : data.words;
 
-  return w ?? null;
+  return {
+    saved_id: data.id,
+    word_id: data.word_id,
+
+    word: w.word,
+    meaning: w.meaning,
+    example: w.example,
+    translation: w.translation,
+    partOfSpeech: w.partOfSpeech,
+    pronunciation: w.pronunciation,
+
+    tags: data.saved_word_tags?.map((t) => t.tag.name) ?? [],
+  };
 };
 
 /* =========================================
-   ④ 保存 or 削除（トグル）
+ ④ 保存 or 削除（トグル動作）
 ========================================= */
 export const toggleSaveStatus = async (word: WordInfo, isSaved: boolean) => {
   if (isSaved) {
@@ -118,12 +141,14 @@ export const toggleSaveStatus = async (word: WordInfo, isSaved: boolean) => {
 };
 
 /* =========================================
-   ⑤ 保存した単語一覧を取得（JOIN）
+ ⑤ 保存した単語一覧を取得（JOIN 完全版）
+     → saved_id, word_id, tags をすべて返す
 ========================================= */
 export const fetchWordlists = async (userId: string): Promise<WordInfo[]> => {
   const { data, error } = await supabase
     .from("saved_words")
     .select(`
+      id,
       word_id,
       words!inner (
         id,
@@ -133,6 +158,9 @@ export const fetchWordlists = async (userId: string): Promise<WordInfo[]> => {
         pronunciation,
         example,
         translation
+      ),
+      saved_word_tags (
+        tag:tag_id ( name )
       )
     `)
     .eq("user_id", userId);
@@ -140,11 +168,21 @@ export const fetchWordlists = async (userId: string): Promise<WordInfo[]> => {
   if (error || !data) return [];
 
   return data.map((row) => {
-    // 🔥 配列でも単体でも確実に単数にする
     const w = Array.isArray(row.words) ? row.words[0] : row.words;
 
     return {
-      ...w,
+      saved_id: row.id,        // saved_words.id
+      word_id: row.word_id,    // words.id
+
+      word: w.word,
+      meaning: w.meaning,
+      partOfSpeech: w.partOfSpeech,
+      pronunciation: w.pronunciation,
+      example: w.example,
+      translation: w.translation,
+
+      tags: row.saved_word_tags?.map((t) => t.tag.name) ?? [],
+
       label: "main",
     };
   });

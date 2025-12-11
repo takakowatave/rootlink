@@ -1,5 +1,5 @@
 // ==============================
-// WordList.tsx
+// WordList.tsx（タグ制限 + 重複禁止 対応版）
 // ==============================
 
 import { useState, useEffect } from "react";
@@ -11,23 +11,24 @@ import type { WordInfo } from "../types";
 import { supabase } from "../lib/supabaseClient";
 
 const WordList = () => {
-  // WordInfo に「関連語のラベル（synonym / antonym）」を追加した型
+  // WordInfo にラベル追加
   type LabeledWord = WordInfo & { label?: "main" | "synonym" | "antonym" };
 
-  // 画面に描画する単語リスト（saved_words に保存された語）
+  // 保存一覧
   const [wordList, setWordList] = useState<LabeledWord[]>([]);
 
-  // ブックマークされている単語名一覧
+  // 保存済み単語名リスト
   const [savedWords, setSavedWords] = useState<string[]>([]);
 
-  // 現在「編集モード」に入っている単語の saved_word_id/word_id（ユニークキー）
+  // 現在編集中の単語 ID
   const [editingWordId, setEditingWordId] = useState<string | null>(null);
 
-  // ==============================
-  // ▼ react-select 用：既存の全タグ
-  // ==============================
+  // react-select 用の全タグ一覧
   const [allTags, setAllTags] = useState<string[]>([]);
 
+  // ------------------------------
+  // ▼ Supabaseから全タグを取得
+  // ------------------------------
   useEffect(() => {
     const loadAllTags = async () => {
       const { data } = await supabase.from("tag").select("name");
@@ -37,10 +38,9 @@ const WordList = () => {
   }, []);
 
   // ==============================
-  // ▼ タグ更新処理（saved_word_tags の更新）
+  // ▼ タグ更新処理（中間テーブルを変更）
   // ==============================
   const updateTags = async (savedWordId: string, tags: string[]) => {
-    // Supabase の返却構造に型を付ける
     type ExistingLink = {
       tag_id: string;
       tag: { name: string } | null;
@@ -50,24 +50,22 @@ const WordList = () => {
       .from("saved_word_tags")
       .select(`
         tag_id,
-        tag:tag_id (
-          name
-        )
+        tag:tag_id ( name )
       `)
       .eq("saved_word_id", savedWordId);
 
     const existingLinks = data as ExistingLink[] | null;
 
-    // 既存タグ名一覧
+    // 既存タグ名
     const existingTagNames =
       existingLinks?.map((row) => row.tag?.name ?? "") ?? [];
 
-    // 差分計算
+    // 追加・削除の差分
     const toAdd = tags.filter((t) => !existingTagNames.includes(t));
     const toRemove = existingTagNames.filter((t) => !tags.includes(t));
 
     // ------------------------------
-    // 追加処理
+    // ▼ 追加処理
     // ------------------------------
     for (const name of toAdd) {
       let { data: tag } = await supabase
@@ -76,7 +74,7 @@ const WordList = () => {
         .eq("name", name)
         .maybeSingle();
 
-      // 無ければ新規作成
+      // タグが存在しなければ作成
       if (!tag) {
         const { data: newTag } = await supabase
           .from("tag")
@@ -86,7 +84,7 @@ const WordList = () => {
         tag = newTag;
       }
 
-      // saved_word_tags に紐付けを保存
+      // 中間テーブルに追加
       await supabase.from("saved_word_tags").insert({
         saved_word_id: savedWordId,
         tag_id: tag.id,
@@ -94,7 +92,7 @@ const WordList = () => {
     }
 
     // ------------------------------
-    // 削除処理
+    // ▼ 削除処理
     // ------------------------------
     for (const name of toRemove) {
       const { data: tag } = await supabase
@@ -116,7 +114,7 @@ const WordList = () => {
   };
 
   // ==============================
-  // ▼ 保存・削除（ブックマークの ON/OFF）
+  // ▼ 保存 / 削除
   // ==============================
   const handleToggleSave = async (word: WordInfo) => {
     const res = await supabase.auth.getUser();
@@ -153,14 +151,13 @@ const WordList = () => {
   };
 
   // ==============================
-  // ▼ 初回ロード
+  // ▼ 初回ロード：単語 + タグ リスト取得
   // ==============================
   useEffect(() => {
     const loadSavedWords = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // words + saved_words + tags を JOIN で取ってくる想定
       const words = await fetchWordlists(user.id);
 
       setWordList(words);
@@ -171,7 +168,7 @@ const WordList = () => {
   }, []);
 
   // ==============================
-  // ▼ レンダリング
+  // ▼ UI 描画
   // ==============================
   return (
     <>
@@ -179,8 +176,6 @@ const WordList = () => {
 
       <div className="w-full">
         {[...wordList].slice().reverse().map((item) => {
-          // saved_id があればそれを優先、それ以外は word_id を使う
-          // さらに prefix を付けて絶対に重複しない key にする
           const uid = item.saved_id
             ? `saved-${item.saved_id}`
             : `word-${item.word_id}`;
@@ -194,10 +189,37 @@ const WordList = () => {
               isEditing={editingWordId === uid}
               onEdit={() => setEditingWordId(uid)}
               onFinishEdit={(tags) => {
-                // saved_words にまだ保存されていない場合はタグ編集不可
+                // 保存されていない単語はタグ不可
                 if (!item.saved_id) return;
 
+                // ==============================
+                // ▼ タグ制限バリデーション
+                // ==============================
+
+                // 個数上限
+                if (tags.length > 10) {
+                  toast.error("タグは最大10個までです");
+                  return;
+                }
+
+                // 重複禁止
+                const uniqueCount = new Set(tags).size;
+                if (uniqueCount !== tags.length) {
+                  toast.error("同じタグは複数追加できません");
+                  return;
+                }
+
+                // 文字数制限
+                const tooLong = tags.find((t) => t.length > 30);
+                if (tooLong) {
+                  toast.error(`タグは30文字以内です：${tooLong}`);
+                  return;
+                }
+
+                // DB 更新
                 updateTags(item.saved_id, tags);
+
+                // 編集終了
                 setEditingWordId(null);
               }}
               allTags={allTags}
